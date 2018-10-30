@@ -1,0 +1,5 @@
+#!/usr/bin/env python
+
+from industrial_payload_manager import industrial_payload_manager
+industrial_payload_manager.industrial_payload_manager_main()
+

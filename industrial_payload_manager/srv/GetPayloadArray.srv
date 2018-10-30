@@ -1,0 +1,6 @@
+# Name of payloads to return. Leave empty to return all.
+string[] payload_names
+---
+bool success
+PayloadArray payload_array
+

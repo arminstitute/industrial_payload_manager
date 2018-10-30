@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+
+from geometry_msgs.msg import TransformStamped, Transform
+from tf.msg import tfMessage
+from industrial_payload_manager.msg import PayloadArray
+import rospy
+import threading
+
+tf_pub=None
+
+frames=dict()
+frames_lock=threading.Lock()
+
+def pose_to_transform_stamped(obj, parent_frame_id):
+    t=TransformStamped()
+    t.transform=Transform(obj.pose.position, obj.pose.orientation)
+    t.header.frame_id=parent_frame_id
+    t.child_frame_id=obj.name    
+    return t
+
+def publish_tf():
+    with frames_lock:
+        n=rospy.Time.now()
+        msg=tfMessage()
+        
+        for _, t in frames.items():
+            msg.transforms.extend(t)
+        
+        for t in msg.transforms:
+            t.header.stamp=n
+        
+        if len(msg.transforms) > 0:
+            tf_pub.publish(msg)
+
+def payload_cb(payload_array):
+    
+    with frames_lock:
+    
+        for p in payload_array.payloads:
+            if p.name in frames:
+                del frames[p.name]
+            t=[]       
+            t.append(pose_to_transform_stamped(p, p.header.frame_id))
+            
+            for p2 in p.gripper_targets:
+                t.append(pose_to_transform_stamped(p2, p.name))
+        
+            for p2 in p.markers:
+                t.append(pose_to_transform_stamped(p2, p.name))
+            frames[p.name] = t
+        for p in payload_array.payload_targets:
+            if p.name in frames:
+                del frames[p.name]
+            frames[p.name]=[pose_to_transform_stamped(p, p.header.frame_id)]
+            
+        for p in payload_array.link_markers:
+            if p.header.frame_id in frames:
+                del frames[p.header.frame_id]
+            t=[]
+            for p2 in p.markers:
+                t.append(pose_to_transform_stamped(p2, p.header.frame_id))
+            frames[p.header.frame_id] = t
+            
+        for n in payload_array.delete_payloads:
+            if n in frames:
+                del n
+    
+    publish_tf()
+
+def main():
+    global tf_pub
+    
+    rospy.init_node("payload_transform_publisher")
+    rospy.Subscriber("payload", PayloadArray, payload_cb)
+    tf_pub = rospy.Publisher("tf", tfMessage, queue_size=100, latch=True)
+    
+    r = rospy.Rate(5) # 10hz
+    while not rospy.is_shutdown():
+        publish_tf()
+        r.sleep()
+
+if __name__ == '__main__':
+    main()
