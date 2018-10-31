@@ -29,7 +29,7 @@
 from __future__ import absolute_import
 
 import xacro
-from urdf_parser_py.urdf import URDF, Mesh
+from urdf_parser_py.urdf import URDF, Mesh, Visual, Collision
 from .msg import Payload, PayloadTarget, PayloadArray, \
     GripperTarget, ArucoGridboardWithPose, LinkMarkers
 import argparse
@@ -40,6 +40,8 @@ import numpy as np
 import xml.etree.ElementTree as ET
 import rospy
 from itertools import chain
+from geometry_msgs.msg import Vector3
+from std_msgs.msg import ColorRGBA
 
 def _origin_to_pose(origin):
     R = rox.rpy2R(origin.rpy) if origin.rpy is not None else np.eye(3)
@@ -163,24 +165,55 @@ def urdf_to_payload(xml_str):
         payload_msg.markers.append(aruco_marker)
     
     #Load in meshes
-    payload_mesh_visual_chain=[(None, payload_link_name)]
+    payload_geometry_chain=[(None, payload_link_name)]
     if payload_link_name in urdf_robot.child_map:
-        payload_mesh_visual_chain.extend(urdf_robot.child_map[payload_link_name])
-    for j_name, l_name in payload_mesh_visual_chain:  
-        v=urdf_robot.link_map[l_name].visual       
+        payload_geometry_chain.extend(urdf_robot.child_map[payload_link_name])
+    for j_name, l_name in payload_geometry_chain:
+        #v=urdf_robot.link_map[l_name].visual       
         j=urdf_robot.joint_map[j_name] if j_name is not None else None       
         
-        if v is None: continue
-        assert isinstance(v.geometry,Mesh), "Payload geometry must be a mesh, invalid payload URDF"
-        assert v.geometry.scale is None, "Invalid mesh in URDF for payload, scaling not supported"
-        if j is not None:
-            mesh_pose=rox_msg.transform2pose_msg(rox_msg.msg2transform(_origin_to_pose(j.origin))*rox_msg.msg2transform(_origin_to_pose(v.origin)))
-        else:
-            mesh_pose=_origin_to_pose(v.origin)
-        mesh_fname=v.geometry.filename
-        payload_msg.mesh_poses.append(mesh_pose)
-        payload_msg.mesh_resources.append(mesh_fname)    
+        link_et=urdf_et.find('.//link[@name="' + l_name + '"]')
+        
+        #Workaround to handle multiple visual elements
+        visual_et_s=link_et.findall('.//visual')
+        for visual_et in visual_et_s:
+            v=Visual.from_xml(visual_et)
+            assert isinstance(v.geometry,Mesh), "Payload geometry must be a mesh, invalid payload URDF"
+            if v.geometry.scale is None:
+                mesh_scale = Vector3(1,1,1)
+            else:
+                mesh_scale = Vector3(*v.geometry.scale)
+            if j is not None:
+                mesh_pose=rox_msg.transform2pose_msg(rox_msg.msg2transform(_origin_to_pose(j.origin))*rox_msg.msg2transform(_origin_to_pose(v.origin)))
+            else:
+                mesh_pose=_origin_to_pose(v.origin)
+            if v.material is None or v.material.color is None:
+                mesh_color = ColorRGBA(0.5,0.5,0.5,1)
+            else:
+                mesh_color = ColorRGBA(*v.material.color.rgba)
+            mesh_fname=v.geometry.filename
+            payload_msg.visual_geometry.mesh_poses.append(mesh_pose)
+            payload_msg.visual_geometry.mesh_resources.append(mesh_fname)
+            payload_msg.visual_geometry.mesh_scales.append(mesh_scale)
+            payload_msg.visual_geometry.mesh_colors.append(mesh_color)
     
+        #Workaround to handle multiple collision elements
+        collision_et_s=link_et.findall('.//collision')
+        for collision_et in collision_et_s:
+            v=Collision.from_xml(visual_et)
+            assert isinstance(v.geometry,Mesh), "Payload geometry must be a mesh, invalid payload URDF"
+            if v.geometry.scale is None:
+                mesh_scale = Vector3(1,1,1)
+            else:
+                mesh_scale = Vector3(*v.geometry.scale)
+            if j is not None:
+                mesh_pose=rox_msg.transform2pose_msg(rox_msg.msg2transform(_origin_to_pose(j.origin))*rox_msg.msg2transform(_origin_to_pose(v.origin)))
+            else:
+                mesh_pose=_origin_to_pose(v.origin)            
+            mesh_fname=v.geometry.filename
+            payload_msg.collision_geometry.mesh_poses.append(mesh_pose)
+            payload_msg.collision_geometry.mesh_resources.append(mesh_fname)
+            payload_msg.collision_geometry.mesh_scales.append(mesh_scale)
     
     payload_msg.confidence=0.1
     

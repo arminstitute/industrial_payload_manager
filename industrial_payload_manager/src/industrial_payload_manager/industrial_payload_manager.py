@@ -158,13 +158,13 @@ class PayloadManager(object):
         msg=payload.payload_msg
                         
         if payload.attached_link is not None:
-            if len(msg.mesh_resources) > 0:
+            if len(msg.collision_geometry.mesh_resources) > 0:
                 try:
                     self.planning_scene.remove_attached_object(payload.attached_link, msg.name)
                 except:
                     pass
                 
-                for i in xrange(1,len(msg.mesh_resources)):
+                for i in xrange(1,len(msg.collision_geometry.mesh_resources)):
                     try:
                         self.planning_scene.remove_attached_object(payload.attached_link, msg.name + "_%d" % i)
                     except:
@@ -200,20 +200,22 @@ class PayloadManager(object):
         if touch_root is not None:
             touch_links.extend(_touch_recurse(touch_root))        
                 
-        for i in xrange(len(msg.mesh_resources)):
+        for i in xrange(len(msg.collision_geometry.mesh_resources)):
             
             mesh_name=msg.name
             if i > 0: mesh_name += "_%d" % i
             
-            mesh_filename=urlparse.urlparse(resource_retriever.get_filename(msg.mesh_resources[i])).path
+            mesh_filename=urlparse.urlparse(resource_retriever.get_filename(msg.collision_geometry.mesh_resources[i])).path
             if mesh_filename.endswith(".dae"):
                 
                 #TODO: fix the dae import in planning_scene_interface
                 rospy.logwarn("dae files currently don't work with python planning_scene_interface, ignoring %s", mesh_filename)
                 continue
             
-            mesh_pose = rox_msg.transform2pose_stamped_msg(rox_msg.msg2transform(msg.pose) * rox_msg.msg2transform(msg.mesh_poses[i]))            
-            mesh_pose.header.frame_id = payload.attached_link            
+            mesh_pose = rox_msg.transform2pose_stamped_msg(rox_msg.msg2transform(msg.pose) * rox_msg.msg2transform(msg.collision_geometry.mesh_poses[i]))            
+            mesh_pose.header.frame_id = payload.attached_link
+            mesh_scale=msg.collision_geometry.mesh_scales[i]
+            mesh_scale = (mesh_scale.x, mesh_scale.y, mesh_scale.z)
             self.planning_scene.attach_mesh(payload.attached_link, mesh_name, mesh_pose, mesh_filename, touch_links=touch_links)
     
     def _update_rviz_sim_cameras(self):
@@ -223,24 +225,25 @@ class PayloadManager(object):
             payload=self.payloads[p]
             msg=payload.payload_msg           
             
-            for i in xrange(len(msg.mesh_resources)):
+            for i in xrange(len(msg.visual_geometry.mesh_resources)):
                 marker=Marker()
                 marker.ns="payload_" + msg.name
                 marker.id=i
                 marker.type=marker.MESH_RESOURCE
                 marker.action=marker.ADD     
-                marker.mesh_resource=msg.mesh_resources[i]
+                marker.mesh_resource=msg.visual_geometry.mesh_resources[i]
                 marker.mesh_use_embedded_materials=True
                 
-                marker.pose = rox_msg.transform2pose_msg(rox_msg.msg2transform(msg.pose) * rox_msg.msg2transform(msg.mesh_poses[i]))                     
+                marker.pose = rox_msg.transform2pose_msg(rox_msg.msg2transform(msg.pose) * rox_msg.msg2transform(msg.visual_geometry.mesh_poses[i]))                     
                 marker.header.frame_id = payload.attached_link
-                marker.scale.x=1.0
-                marker.scale.y=1.0
-                marker.scale.z=1.0
-                marker.color.a=1
-                marker.color.r=0.5
-                marker.color.g=0.5
-                marker.color.b=0.5            
+                marker.scale=msg.visual_geometry.mesh_scales[i]
+                if i < len(msg.visual_geometry.mesh_colors):
+                    marker.color=msg.visual_geometry.mesh_colors[i]
+                else:                
+                    marker.color.a=1
+                    marker.color.r=0.5
+                    marker.color.g=0.5
+                    marker.color.b=0.5            
                 marker.header.stamp=rospy.Time.now()
                 marker.frame_locked=True
                 marker._check_types()

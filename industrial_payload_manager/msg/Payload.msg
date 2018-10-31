@@ -10,9 +10,9 @@ geometry_msgs/Pose pose
 # Target pose for vacuum_gripper_tool
 GripperTarget[] gripper_targets
 
-# meshes
-string[] mesh_resources
-geometry_msgs/Pose[] mesh_poses
+# Payload geometry
+PayloadGeometry visual_geometry
+PayloadGeometry collision_geometry
 
 # Aruco markers
 ArucoGridboardWithPose[] markers

@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   rospy
   std_msgs
+  shape_msgs
   message_generation
 )
 
@@ -53,6 +54,7 @@ add_message_files(
   ArucoGridboard.msg
   ArucoGridboardWithPose.msg
   Payload.msg
+  PayloadGeometry.msg
   PayloadTarget.msg
   PayloadArray.msg
   GripperTarget.msg
@@ -76,7 +78,7 @@ add_service_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  geometry_msgs std_msgs
+  geometry_msgs std_msgs shape_msgs
 )
 
 ################################################
