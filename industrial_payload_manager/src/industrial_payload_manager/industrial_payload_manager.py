@@ -34,27 +34,34 @@ import traceback
 import urlparse
 import resource_retriever
 import copy
+import numpy as np
 from .msg import Payload, PayloadTarget, PayloadArray, \
     GripperTarget, ArucoGridboardWithPose, LinkMarkers
 from .srv import UpdatePayloadPose, UpdatePayloadPoseRequest, UpdatePayloadPoseResponse, \
     GetPayloadArray, GetPayloadArrayRequest, GetPayloadArrayResponse
-from moveit_commander import PlanningSceneInterface
 import general_robotics_toolbox.ros_msg as rox_msg
 from visualization_msgs.msg import Marker, MarkerArray
 from urdf_parser_py.urdf import URDF
 from moveit_msgs.msg import CollisionObject, AttachedCollisionObject
+from shape_msgs.msg import Mesh, MeshTriangle
+from geometry_msgs.msg import Point, Pose
+
+# Load pyassimp, based on moveit_commander planning_scene_interface.py
+try:
+    from pyassimp import pyassimp
+except:
+    # support pyassimp > 3.0
+    try:
+        import pyassimp
+    except:
+        pyassimp = False
+        print("Failed to import pyassimp, see https://github.com/ros-planning/moveit/issues/86 for more info")
 
 class Payload(object):
     def __init__(self, payload_msg, ros_id):
         self.payload_msg=payload_msg
         self.ros_id=ros_id
         self.attached_link=None
-
-class PayloadManagerPlanningSceneInterface(PlanningSceneInterface):
-    def __init__(self, ns='', pub_aco=None):
-        super(PayloadManagerPlanningSceneInterface, self).__init__(ns)
-        if pub_aco is not None:
-            self._pub_aco=pub_aco
 
 class PayloadManagerSubscriberListener(rospy.SubscribeListener):
     def __init__(self, manager):
@@ -72,8 +79,7 @@ class PayloadManager(object):
         self.payloads_lock=threading.Lock()
         self._ros_id=1
         self._pub_aco_listener = PayloadManagerSubscriberListener(self)
-        self._pub_aco=rospy.Publisher('/attached_collision_object', AttachedCollisionObject, queue_size=100, subscriber_listener = self._pub_aco_listener)
-        self.planning_scene=PayloadManagerPlanningSceneInterface(pub_aco = self._pub_aco)
+        self._pub_aco=rospy.Publisher('/attached_collision_object', AttachedCollisionObject, queue_size=100, subscriber_listener = self._pub_aco_listener)        
         self._payload_msg_pub=rospy.Publisher("payload", PayloadArray, queue_size=100)
         self.rviz_cam_publisher=rospy.Publisher("rviz_sim_cameras/payload_marker_array", MarkerArray, queue_size=100, latch=True)
         self._payload_msg_sub=rospy.Subscriber("payload", PayloadArray, self._payload_msg_cb)
@@ -158,23 +164,21 @@ class PayloadManager(object):
         msg=payload.payload_msg
                         
         if payload.attached_link is not None:
-            if len(msg.collision_geometry.mesh_resources) > 0:
-                try:
-                    self.planning_scene.remove_attached_object(payload.attached_link, msg.name)
-                except:
-                    pass
-                
-                for i in xrange(1,len(msg.collision_geometry.mesh_resources)):
-                    try:
-                        self.planning_scene.remove_attached_object(payload.attached_link, msg.name + "_%d" % i)
-                    except:
-                        pass
+            aco = AttachedCollisionObject()
+            aco.object.operation = CollisionObject.REMOVE
+            aco.link_name = payload.attached_link
+            aco.object.id = msg.name
+            self._pub_aco.publish(aco)
         
         payload.attached_link = None
             
     def _add_payload_to_planning_scene(self, payload):
         
         msg=payload.payload_msg
+        
+        co = CollisionObject()
+        co.id = payload.payload_msg.name
+        co.header.frame_id = msg.header.frame_id
         
         payload.attached_link=msg.header.frame_id
         
@@ -199,24 +203,23 @@ class PayloadManager(object):
         
         if touch_root is not None:
             touch_links.extend(_touch_recurse(touch_root))        
-                
+        
         for i in xrange(len(msg.collision_geometry.mesh_resources)):
             
-            mesh_name=msg.name
-            if i > 0: mesh_name += "_%d" % i
-            
             mesh_filename=urlparse.urlparse(resource_retriever.get_filename(msg.collision_geometry.mesh_resources[i])).path
-            if mesh_filename.endswith(".dae"):
-                
-                #TODO: fix the dae import in planning_scene_interface
-                rospy.logwarn("dae files currently don't work with python planning_scene_interface, ignoring %s", mesh_filename)
-                continue
-            
-            mesh_pose = rox_msg.transform2pose_stamped_msg(rox_msg.msg2transform(msg.pose) * rox_msg.msg2transform(msg.collision_geometry.mesh_poses[i]))            
-            mesh_pose.header.frame_id = payload.attached_link
+            mesh_pose = rox_msg.transform2pose_msg(rox_msg.msg2transform(msg.pose) * rox_msg.msg2transform(msg.collision_geometry.mesh_poses[i]))            
             mesh_scale=msg.collision_geometry.mesh_scales[i]
             mesh_scale = (mesh_scale.x, mesh_scale.y, mesh_scale.z)
-            self.planning_scene.attach_mesh(payload.attached_link, mesh_name, mesh_pose, mesh_filename, touch_links=touch_links)
+            
+            mesh_msg = load_mesh_file_to_mesh_msg(mesh_filename, mesh_scale)
+            co.meshes.extend(mesh_msg)
+            co.mesh_poses.extend([mesh_pose]*len(mesh_msg))
+        
+        aco = AttachedCollisionObject()    
+        aco.link_name = payload.attached_link
+        aco.object = co       
+        
+        self._pub_aco.publish(aco)
     
     def _update_rviz_sim_cameras(self):
         
@@ -318,7 +321,45 @@ class PayloadManager(object):
                 return GetPayloadArrayResponse(False, PayloadArray())
             return GetPayloadArrayResponse(True, p_array)
             
-            
+def _get_meshes_from_pyassimp_node(node, scale):
+    meshes=[]
+    tf = node.transformation
+    # Match behavior of RViz for loading collada data
+    # See rviz mesh_loader.cpp buildMesh() lines 227-236
+    pnode = node.parent
+    while pnode is not None and hasattr(pnode, 'parent'):
+        # Don't convert to y-up orientation, which is what the root node in
+        # Assimp does
+        if pnode.parent is not None and hasattr(pnode.parent, 'parent'):
+            tf = np.dot(pnode.transformation, tf)
+        pnode = pnode.parent
+    for m in node.meshes:
+        mesh = Mesh()
+        for face in m.faces:
+            triangle = MeshTriangle()
+            triangle.vertex_indices = [face[0], face[1], face[2]]
+            mesh.triangles.append(triangle)
+        for vertex in m.vertices:
+            point = Point()
+            vertex_h=np.dot(tf,np.hstack((vertex, [1])))
+            point.x = vertex_h[0] * scale[0]
+            point.y = vertex_h[1] * scale[1]
+            point.z = vertex_h[2] * scale[2]
+            mesh.vertices.append(point)
+        meshes.append(mesh)
+        
+    for c in node.children:
+        meshes.extend( _get_meshes_from_pyassimp_node(c,scale))        
+    return meshes
+
+def load_mesh_file_to_mesh_msg(filename, scale = (1,1,1)):
+    # Load mesh from file
+    # Loosely based on planning_scene_interface in moveit_commander package
+    if pyassimp is False:
+        raise Exception("Pyassimp needs patch https://launchpadlibrarian.net/319496602/patchPyassim.txt")
+    
+    scene = pyassimp.load(filename)
+    return _get_meshes_from_pyassimp_node(scene.rootnode, scale)
 
 def industrial_payload_manager_main():
     
