@@ -29,7 +29,7 @@
 from __future__ import absolute_import
 
 import xacro
-from urdf_parser_py.urdf import URDF, Mesh, Visual, Collision
+from urdf_parser_py.urdf import URDF, Mesh, Visual, Collision, Box, Cylinder, Sphere
 from .msg import Payload, PayloadTarget, PayloadArray, \
     GripperTarget, ArucoGridboardWithPose, LinkMarkers
 import argparse
@@ -42,6 +42,7 @@ import rospy
 from itertools import chain
 from geometry_msgs.msg import Vector3
 from std_msgs.msg import ColorRGBA
+from shape_msgs.msg import SolidPrimitive
 
 def _origin_to_pose(origin):
     R = rox.rpy2R(origin.rpy) if origin.rpy is not None else np.eye(3)
@@ -178,42 +179,86 @@ def urdf_to_payload(xml_str):
         visual_et_s=link_et.findall('.//visual')
         for visual_et in visual_et_s:
             v=Visual.from_xml(visual_et)
-            assert isinstance(v.geometry,Mesh), "Payload geometry must be a mesh, invalid payload URDF"
-            if v.geometry.scale is None:
-                mesh_scale = Vector3(1,1,1)
-            else:
-                mesh_scale = Vector3(*v.geometry.scale)
             if j is not None:
-                mesh_pose=rox_msg.transform2pose_msg(rox_msg.msg2transform(_origin_to_pose(j.origin))*rox_msg.msg2transform(_origin_to_pose(v.origin)))
+                visual_pose=rox_msg.transform2pose_msg(rox_msg.msg2transform(_origin_to_pose(j.origin))*rox_msg.msg2transform(_origin_to_pose(v.origin)))
             else:
-                mesh_pose=_origin_to_pose(v.origin)
+                visual_pose=_origin_to_pose(v.origin)
             if v.material is None or v.material.color is None:
-                mesh_color = ColorRGBA(0.5,0.5,0.5,1)
+                visual_color = ColorRGBA(0.5,0.5,0.5,1)
             else:
-                mesh_color = ColorRGBA(*v.material.color.rgba)
-            mesh_fname=v.geometry.filename
-            payload_msg.visual_geometry.mesh_poses.append(mesh_pose)
-            payload_msg.visual_geometry.mesh_resources.append(mesh_fname)
-            payload_msg.visual_geometry.mesh_scales.append(mesh_scale)
-            payload_msg.visual_geometry.mesh_colors.append(mesh_color)
+                visual_color = ColorRGBA(*v.material.color.rgba)
+            if isinstance(v.geometry,Mesh):
+                if v.geometry.scale is None:
+                    mesh_scale = Vector3(1,1,1)
+                else:
+                    mesh_scale = Vector3(*v.geometry.scale)                
+                mesh_fname=v.geometry.filename
+                payload_msg.visual_geometry.mesh_poses.append(visual_pose)
+                payload_msg.visual_geometry.mesh_resources.append(mesh_fname)
+                payload_msg.visual_geometry.mesh_scales.append(mesh_scale)
+                payload_msg.visual_geometry.mesh_colors.append(visual_color)
+            elif isinstance(v.geometry,Box):
+                shape = SolidPrimitive()
+                shape.type=SolidPrimitive.BOX
+                shape.dimensions=v.geometry.size
+                payload_msg.visual_geometry.primitives.append(shape)
+                payload_msg.visual_geometry.primitive_poses.append(visual_pose)
+                payload_msg.visual_geometry.primitive_colors.append(visual_color)
+            elif isinstance(v.geometry,Cylinder):
+                shape = SolidPrimitive()
+                shape.type=SolidPrimitive.CYLINDER
+                shape.dimensions=[v.geometry.length, v.geometry.radius]
+                payload_msg.visual_geometry.primitives.append(shape)
+                payload_msg.visual_geometry.primitive_poses.append(visual_pose)
+                payload_msg.visual_geometry.primitive_colors.append(visual_color)
+            elif isinstance(v.geometry,Sphere):
+                shape = SolidPrimitive()
+                shape.type=SolidPrimitive.SPHERE
+                shape.dimensions=[v.geometry.radius]
+                payload_msg.visual_geometry.primitives.append(shape)
+                payload_msg.visual_geometry.primitive_poses.append(visual_pose)
+                payload_msg.visual_geometry.primitive_colors.append(visual_color)
+            else:                
+                assert False, "Invalid geometry in URDF"
     
         #Workaround to handle multiple collision elements
         collision_et_s=link_et.findall('.//collision')
         for collision_et in collision_et_s:
-            v=Collision.from_xml(visual_et)
-            assert isinstance(v.geometry,Mesh), "Payload geometry must be a mesh, invalid payload URDF"
-            if v.geometry.scale is None:
-                mesh_scale = Vector3(1,1,1)
-            else:
-                mesh_scale = Vector3(*v.geometry.scale)
+            v=Collision.from_xml(collision_et)
             if j is not None:
-                mesh_pose=rox_msg.transform2pose_msg(rox_msg.msg2transform(_origin_to_pose(j.origin))*rox_msg.msg2transform(_origin_to_pose(v.origin)))
+                collision_pose=rox_msg.transform2pose_msg(rox_msg.msg2transform(_origin_to_pose(j.origin))*rox_msg.msg2transform(_origin_to_pose(v.origin)))
             else:
-                mesh_pose=_origin_to_pose(v.origin)            
-            mesh_fname=v.geometry.filename
-            payload_msg.collision_geometry.mesh_poses.append(mesh_pose)
-            payload_msg.collision_geometry.mesh_resources.append(mesh_fname)
-            payload_msg.collision_geometry.mesh_scales.append(mesh_scale)
+                collision_pose=_origin_to_pose(v.origin)
+            if isinstance(v.geometry,Mesh):
+                if v.geometry.scale is None:
+                    mesh_scale = Vector3(1,1,1)
+                else:
+                    mesh_scale = Vector3(*v.geometry.scale)                            
+                mesh_fname=v.geometry.filename
+                payload_msg.collision_geometry.mesh_poses.append(collision_pose)
+                payload_msg.collision_geometry.mesh_resources.append(mesh_fname)
+                payload_msg.collision_geometry.mesh_scales.append(mesh_scale)
+            elif isinstance(v.geometry,Box):
+                shape = SolidPrimitive()
+                shape.type=SolidPrimitive.BOX
+                shape.dimensions=v.geometry.size
+                payload_msg.collision_geometry.primitives.append(shape)
+                payload_msg.collision_geometry.primitive_poses.append(collision_pose)
+            elif isinstance(v.geometry,Cylinder):
+                shape = SolidPrimitive()
+                shape.type=SolidPrimitive.CYLINDER
+                shape.dimensions=[v.geometry.length, v.geometry.radius]
+                payload_msg.collision_geometry.primitives.append(shape)
+                payload_msg.collision_geometry.primitive_poses.append(collision_pose)
+            elif isinstance(v.geometry,Sphere):
+                shape = SolidPrimitive()
+                shape.type=SolidPrimitive.SPHERE
+                shape.dimensions=[v.geometry.radius]
+                payload_msg.collision_geometry.primitives.append(shape)
+                payload_msg.collision_geometry.primitive_poses.append(collision_pose)
+            else:                
+                assert False, "Invalid geometry in URDF"
+                
     
     payload_msg.confidence=0.1
     

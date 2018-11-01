@@ -43,8 +43,8 @@ import general_robotics_toolbox.ros_msg as rox_msg
 from visualization_msgs.msg import Marker, MarkerArray
 from urdf_parser_py.urdf import URDF
 from moveit_msgs.msg import CollisionObject, AttachedCollisionObject
-from shape_msgs.msg import Mesh, MeshTriangle
-from geometry_msgs.msg import Point, Pose
+from shape_msgs.msg import Mesh, MeshTriangle, SolidPrimitive
+from geometry_msgs.msg import Point, Pose, Vector3
 
 # Load pyassimp, based on moveit_commander planning_scene_interface.py
 try:
@@ -162,13 +162,15 @@ class PayloadManager(object):
     
     def _remove_payload_from_planning_scene(self, payload):
         msg=payload.payload_msg
-                        
+        
+        aco = AttachedCollisionObject()
+        aco.object.operation = CollisionObject.REMOVE
         if payload.attached_link is not None:
-            aco = AttachedCollisionObject()
-            aco.object.operation = CollisionObject.REMOVE
             aco.link_name = payload.attached_link
-            aco.object.id = msg.name
-            self._pub_aco.publish(aco)
+        else:
+            aco.link_name = ""
+        aco.object.id = msg.name
+        self._pub_aco.publish(aco)
         
         payload.attached_link = None
             
@@ -215,6 +217,11 @@ class PayloadManager(object):
             co.meshes.extend(mesh_msg)
             co.mesh_poses.extend([mesh_pose]*len(mesh_msg))
         
+        for i in xrange(len(msg.collision_geometry.primitives)):
+            co.primitives.append(msg.collision_geometry.primitives[i])
+            primitive_pose = rox_msg.transform2pose_msg(rox_msg.msg2transform(msg.pose) * rox_msg.msg2transform(msg.collision_geometry.primitive_poses[i]))
+            co.primitive_poses.append(primitive_pose)
+        
         aco = AttachedCollisionObject()    
         aco.link_name = payload.attached_link
         aco.object = co       
@@ -228,10 +235,12 @@ class PayloadManager(object):
             payload=self.payloads[p]
             msg=payload.payload_msg           
             
+            id = 0
+            
             for i in xrange(len(msg.visual_geometry.mesh_resources)):
                 marker=Marker()
                 marker.ns="payload_" + msg.name
-                marker.id=i
+                marker.id=id
                 marker.type=marker.MESH_RESOURCE
                 marker.action=marker.ADD     
                 marker.mesh_resource=msg.visual_geometry.mesh_resources[i]
@@ -252,8 +261,47 @@ class PayloadManager(object):
                 marker._check_types()
                 #marker.colors.append(ColorRGBA(0.5,0.5,0.5,1))
             
-                marker_array.markers.append(marker)               
+                marker_array.markers.append(marker)
+                id += 1 
+            for i in xrange(len(msg.visual_geometry.primitives)):
+                marker=Marker()
+                marker.ns="payload_" + msg.name
+                marker.id=id
+                primitive = msg.visual_geometry.primitives[i]
+                primitive_type = primitive.type
+                if primitive_type == SolidPrimitive.BOX:
+                    marker.type=Marker.CUBE
+                    assert len(primitive.dimensions) == 3
+                    marker.scale = Vector3(*primitive.dimensions)
+                elif primitive_type == SolidPrimitive.CYLINDER:
+                    marker.type=Marker.CYLINDER
+                    assert len(primitive.dimensions) == 2
+                    marker.scale = Vector3(primitive.dimensions[1]*2, primitive.dimensions[1]*2, primitive.dimensions[0])
+                elif primitive_type == SolidPrimitive.SPHERE:
+                    marker.type=Marker.SPHERE
+                    assert len(primitive.dimensions) == 1
+                    marker.scale = Vector3(*([primitive.dimensions[0]*2]*3))
                     
+                else:
+                    assert False, "Invalid geometry specified for SolidPrimitive"
+                
+                marker.action=marker.ADD                             
+                
+                marker.pose = rox_msg.transform2pose_msg(rox_msg.msg2transform(msg.pose) * rox_msg.msg2transform(msg.visual_geometry.primitive_poses[i]))                     
+                marker.header.frame_id = payload.attached_link                
+                if i < len(msg.visual_geometry.primitive_colors):
+                    marker.color=msg.visual_geometry.primitive_colors[i]
+                else:                
+                    marker.color.a=1
+                    marker.color.r=0.5
+                    marker.color.g=0.5
+                    marker.color.b=0.5            
+                marker.header.stamp=rospy.Time.now()
+                marker.frame_locked=True
+                marker._check_types()
+                marker_array.markers.append(marker) 
+                id += 1
+                
         marker_array._check_types
         self.rviz_cam_publisher.publish(marker_array)    
     
