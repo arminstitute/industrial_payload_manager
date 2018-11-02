@@ -81,7 +81,7 @@ class PayloadManager(object):
         self._pub_aco_listener = PayloadManagerSubscriberListener(self)
         self._pub_aco=rospy.Publisher('/attached_collision_object', AttachedCollisionObject, queue_size=100, subscriber_listener = self._pub_aco_listener)        
         self._payload_msg_pub=rospy.Publisher("payload", PayloadArray, queue_size=100)
-        self.rviz_cam_publisher=rospy.Publisher("rviz_sim_cameras/payload_marker_array", MarkerArray, queue_size=100, latch=True)
+        self.rviz_cam_publisher=rospy.Publisher("payload_marker_array", MarkerArray, queue_size=100, latch=True)
         self._payload_msg_sub=rospy.Subscriber("payload", PayloadArray, self._payload_msg_cb)
         self._update_payload_pose_srv=rospy.Service("update_payload_pose", UpdatePayloadPose, self._update_payload_pose_srv_cb)
         self._get_payload_array_srv=rospy.Service("get_payload_array", GetPayloadArray, self._get_payload_array_srv_cb)
