@@ -1,0 +1,4 @@
+<launch>
+  <arg name="load_payloads" default="false"/>
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find industrial_payload_manager)/test/urdf/test_scene.xacro' load_payloads:=$(arg load_payloads)" />
+</launch>

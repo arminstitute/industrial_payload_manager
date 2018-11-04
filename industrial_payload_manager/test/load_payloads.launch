@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<launch>
+  <node name="urdf_to_payload_1" pkg="industrial_payload_manager" type="urdf_to_payload" args="
+--payload-xacro-in $(find industrial_payload_manager)/test/urdf/payload1_payload.xacro
+--payload-xacro-in $(find industrial_payload_manager)/test/urdf/payload2_payload.xacro
+--payload-xacro-in $(find industrial_payload_manager)/test/urdf/payload3_payload.xacro
+--payload-target-xacro-in $(find industrial_payload_manager)/test/urdf/fixture1_payload1_target.xacro
+--payload-target-xacro-in $(find industrial_payload_manager)/test/urdf/fixture2_payload2_target.xacro
+--link-markers-xacro-in $(find industrial_payload_manager)/test/urdf/link_3_marker.xacro
+--pub /payload"/>
+</launch>

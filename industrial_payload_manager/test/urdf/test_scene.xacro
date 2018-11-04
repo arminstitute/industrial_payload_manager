@@ -1,0 +1,187 @@
+<robot name="test_scene" xmlns:xacro="http://ros.org/wiki/xacro">
+
+<xacro:arg name="load_payloads" default="false"/>
+
+<link name="world"/>
+
+<link name="base_link">
+  <visual name="visual">
+  <origin xyz="0 0 0.1"/>
+  <geometry><box size="0.4 0.4 0.2"/></geometry>
+  </visual>
+  <collision name="collision">
+  <origin xyz="0 0 0.1"/>
+  <geometry><box size="0.4 0.4 0.2"/></geometry>
+  </collision>
+</link>
+
+<link name="link_1">
+  <visual name="visual">
+  <origin rpy="${radians(90)} 0 0" xyz="0 0 0"/>
+  <geometry><cylinder length="0.3" radius="0.1"/></geometry>
+  </visual>
+  <collision name="collision">
+  <origin rpy="${radians(90)} 0 0" xyz="0 0 0"/>
+  <geometry><cylinder length="0.3" radius="0.1"/></geometry>
+  </collision>
+</link>
+
+<link name="link_2">
+  <visual name="visual">
+  <origin rpy="0 0 0" xyz="0 0 0.5"/>
+  <geometry><cylinder length="1" radius="0.05"/></geometry>
+  </visual>
+  <collision name="collision">
+  <origin rpy="0 0 0" xyz="0 0 0.5"/>
+  <geometry><cylinder length="1" radius="0.05"/></geometry>
+  </collision>
+  <visual name="visual">
+  <origin rpy="${radians(90)} 0 0" xyz="0 0 1"/>
+  <geometry><cylinder length="0.12" radius="0.07"/></geometry>
+  </visual>
+  <collision name="collision">
+  <origin rpy="${radians(90)} 0 0" xyz="0 0 1"/>
+  <geometry><cylinder length="0.12" radius="0.07"/></geometry>
+  </collision>
+</link>
+
+<link name="link_3">
+  <visual name="visual">
+  <origin rpy="0 ${radians(90)} 0" xyz="0.5 0 0"/>
+  <geometry><cylinder length="1" radius="0.05"/></geometry>
+  </visual>
+  <visual name="visual2">
+  <origin rpy="0 0 ${radians(-90)}" xyz="0.5 0 0.05"/>
+  <geometry><mesh filename="package://industrial_payload_manager/test/meshes/markers/artag_1234.dae"/></geometry>
+  </visual>
+  <collision name="collision">
+  <origin rpy="0 ${radians(90)} 0" xyz="0.5 0 0"/>
+  <geometry><cylinder length="1" radius="0.05"/></geometry>
+  </collision>
+</link>
+
+<link name="link_4"/>
+
+<link name="tool0"/>
+
+<link name="vacuum_gripper">
+  <visual name="visual">
+  <origin xyz="0.025 0 0"/>
+  <geometry><box size="0.05 0.2 0.2"/></geometry>
+  </visual>
+  <visual name="visual2">
+  <origin xyz="0.1 -0.08 -0.08" rpy="0 ${radians(90)} 0"/>
+  <geometry><cylinder length="0.1" radius="0.02"/></geometry>
+  </visual>
+  <visual name="visual3">
+  <origin xyz="0.1 0.08 -0.08" rpy="0 ${radians(90)} 0"/>
+  <geometry><cylinder length="0.1" radius="0.02"/></geometry>
+  </visual>
+  <visual name="visual4">
+  <origin xyz="0.1 -0.08 0.08" rpy="0 ${radians(90)} 0"/>
+  <geometry><cylinder length="0.1" radius="0.02"/></geometry>
+  </visual>
+  <visual name="visual5">
+  <origin xyz="0.1 0.08 0.08" rpy="0 ${radians(90)} 0"/>
+  <geometry><cylinder length="0.1" radius="0.02"/></geometry>
+  </visual>
+  <collision name="collision">
+  <origin xyz="0 0 0"/>
+  <geometry><box size="0.15 0.2 0.2"/></geometry>
+  </collision>
+</link>
+
+<link name="vacuum_gripper_tool"/>
+
+<joint name="world_to_base_link" type="fixed">
+  <parent link="world"/>
+  <child link="base_link"/>
+  <origin xyz="-0.5 0 0"/>
+</joint>
+
+<joint name="joint_1" type="revolute">
+  <parent link="base_link"/>
+  <child link="link_1"/>
+  <origin xyz="0 0 0.2"/>
+  <axis xyz="0 0 1"/>
+  <limit effort="0" lower="${radians(-180)}" upper="${radians(180)}" velocity="${radians(180)}"/>
+</joint>
+
+<joint name="joint_2" type="revolute">
+  <parent link="link_1"/>
+  <child link="link_2"/>
+  <origin xyz="0 0 0"/>
+  <axis xyz="0 1 0"/>
+  <limit effort="0" lower="${radians(-90)}" upper="${radians(90)}" velocity="${radians(180)}"/>
+</joint>
+
+<joint name="joint_3" type="revolute">
+  <parent link="link_2"/>
+  <child link="link_3"/>
+  <origin xyz="0 0 1"/>
+  <axis xyz="0 1 0"/>
+  <limit effort="0" lower="${radians(-90)}" upper="${radians(90)}" velocity="${radians(180)}"/>
+</joint>
+
+<joint name="joint_4" type="revolute">
+  <parent link="link_3"/>
+  <child link="link_4"/>
+  <origin xyz="0 0 0"/>
+  <axis xyz="1 0 0"/>
+  <limit effort="0" lower="${radians(-360)}" upper="${radians(360)}" velocity="${radians(180)}"/>
+</joint>
+
+<joint name="link_4_to_tool0" type="fixed">
+  <parent link="link_4"/>
+  <child link="tool0"/>
+  <origin xyz="1 0 0"/>  
+</joint>
+
+<joint name="tool0_to_vacuum_gripper" type="fixed">
+  <parent link="tool0"/>
+  <child link="vacuum_gripper"/>
+  <origin xyz="0 0 0"/>  
+</joint>
+
+<joint name="vacuum_gripper_to_vacuum_gripper_tool" type="fixed">
+  <parent link="vacuum_gripper"/>
+  <child link="vacuum_gripper_tool"/>
+  <origin xyz="0.15 0 0" rpy="0 ${radians(90)} 0"/>  
+</joint>
+
+<link name="fixture1">
+  <visual name="visual">
+  <origin xyz="0 0 -0.1"/>
+  <geometry><cylinder length="0.2" radius="0.1"/></geometry>
+  </visual>
+</link>
+
+<joint name="world_to_fixture1" type="fixed">
+  <parent link="world"/>
+  <child link="fixture1"/>
+  <origin xyz="0.5 -0.9 0.2"/>
+</joint>
+
+<link name="fixture2">
+  <visual name="visual">
+  <origin xyz="0 0 -0.1"/>
+  <geometry><cylinder length="0.2" radius="0.1"/></geometry>
+  </visual>
+</link>
+
+<joint name="world_to_fixture2" type="fixed">
+  <parent link="world"/>
+  <child link="fixture2"/>
+  <origin xyz="0.5 0.9 0.2"/>
+</joint>
+
+<xacro:if value="$(arg load_payloads)">
+  <xacro:include filename="$(find industrial_payload_manager)/test/urdf/payload1_payload.xacro"/>
+  <xacro:include filename="$(find industrial_payload_manager)/test/urdf/payload2_payload.xacro"/>
+  <xacro:include filename="$(find industrial_payload_manager)/test/urdf/payload3_payload.xacro"/>
+  <xacro:include filename="$(find industrial_payload_manager)/test/urdf/fixture1_payload1_target.xacro"/>
+  <xacro:include filename="$(find industrial_payload_manager)/test/urdf/fixture2_payload2_target.xacro"/>
+  <xacro:include filename="$(find industrial_payload_manager)/test/urdf/link_3_marker.xacro"/>
+</xacro:if>
+
+</robot>

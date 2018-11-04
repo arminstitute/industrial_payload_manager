@@ -1,0 +1,69 @@
+link_name: "world"
+object: 
+  header: 
+    seq: 0
+    stamp: 
+      secs: 0
+      nsecs:         0
+    frame_id: "world"
+  id: "payload3"
+  type: 
+    key: ''
+    db: ''
+  primitives: 
+    - 
+      type: 1
+      dimensions: [0.11, 0.121, 0.31]
+    - 
+      type: 3
+      dimensions: [0.201, 0.071]
+    - 
+      type: 2
+      dimensions: [0.251]
+  primitive_poses: 
+    - 
+      position: 
+        x: 1.88600601216
+        y: 1.51030316643
+        z: 0.69986939853
+      orientation: 
+        x: -0.0913695880205
+        y: -0.660507495374
+        z: 0.463935733859
+        w: 0.583219582823
+    - 
+      position: 
+        x: 1.71824084496
+        y: 2.11079858523
+        z: 0.79066642864
+      orientation: 
+        x: -0.0697851339177
+        y: -0.682767689176
+        z: 0.426723198515
+        w: 0.588952994347
+    - 
+      position: 
+        x: 1.89440600799
+        y: 1.73767871501
+        z: 0.403662038765
+      orientation: 
+        x: 0.0946329354464
+        y: -0.759959409764
+        z: 0.0892565478836
+        w: 0.636819889529
+  meshes: []
+  mesh_poses: []
+  planes: []
+  plane_poses: []
+  operation: 0
+touch_links: []
+detach_posture: 
+  header: 
+    seq: 0
+    stamp: 
+      secs: 0
+      nsecs:         0
+    frame_id: ''
+  joint_names: []
+  points: []
+weight: 0.0

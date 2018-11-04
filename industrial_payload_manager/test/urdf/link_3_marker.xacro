@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<robot name="link_3_marker" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <link name="link_3_marker_1">
+    <xacro:if value="$(arg payload_extensions)">
+    <aruco_marker>
+      <gridboard markersX="2" markersY="2" markerLength="0.0972" markerSpacing="0.005" dictionary="DICT_6X6_250" firstMarker="1"/>
+    </aruco_marker>
+    </xacro:if>
+  </link>
+
+  <joint name="link_3_to_marker_1_j" type="fixed">
+    <parent link="link_3"/>
+    <child link="link_3_marker_1"/>    
+    <origin rpy="0 0 ${radians(-90)}" xyz="0.4 0.1 0.05"/>
+  </joint>
+
+</robot>

@@ -1,0 +1,516 @@
+header: 
+  seq: 2
+  stamp: 
+    secs: 1541203515
+    nsecs: 311584949
+  frame_id: ''
+payloads: 
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1541203515
+        nsecs: 311584949
+      frame_id: "world"
+    name: "payload1"
+    pose: 
+      position: 
+        x: 0.75
+        y: -0.7
+        z: 0.25
+      orientation: 
+        x: -0.0188301207692
+        y: -0.0181840362552
+        z: -0.719093300553
+        w: 0.694420328387
+    gripper_targets: 
+      - 
+        header: 
+          seq: 0
+          stamp: 
+            secs: 0
+            nsecs:         0
+          frame_id: "payload1"
+        name: "payload1_gripper_target"
+        pose: 
+          position: 
+            x: 0.5
+            y: 0.3
+            z: 0.05
+          orientation: 
+            x: 0.999657324976
+            y: 2.70699889185e-15
+            z: 0.0261769483079
+            w: -1.03376116998e-13
+        pickup_ft_threshold: []
+        place_ft_threshold: []
+    visual_geometry: 
+      primitives: []
+      primitive_poses: []
+      primitive_colors: []
+      mesh_resources: ['package://industrial_payload_manager/test/meshes/payload1.stl']
+      mesh_poses: 
+        - 
+          position: 
+            x: 0.0
+            y: 0.0
+            z: -0.05
+          orientation: 
+            x: 0.0
+            y: 0.0
+            z: 0.0
+            w: 1.0
+      mesh_scales: 
+        - 
+          x: 1.0
+          y: 1.0
+          z: 1.0
+      mesh_colors: 
+        - 
+          r: 0.0
+          g: 0.5
+          b: 0.5
+          a: 1.0
+    collision_geometry: 
+      primitives: []
+      primitive_poses: []
+      primitive_colors: []
+      mesh_resources: ['package://industrial_payload_manager/test/meshes/payload1.stl']
+      mesh_poses: 
+        - 
+          position: 
+            x: 0.0
+            y: 0.0
+            z: -0.05
+          orientation: 
+            x: 0.0
+            y: 0.0
+            z: 0.0
+            w: 1.0
+      mesh_scales: 
+        - 
+          x: 1.0
+          y: 1.0
+          z: 1.0
+      mesh_colors: []
+    markers: []
+    inertia: 
+      m: 0.0
+      com: 
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      ixx: 0.0
+      ixy: 0.0
+      ixz: 0.0
+      iyy: 0.0
+      iyz: 0.0
+      izz: 0.0
+    confidence: 0.1
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1541203515
+        nsecs: 311584949
+      frame_id: "world"
+    name: "payload2"
+    pose: 
+      position: 
+        x: 0.75
+        y: 1.5
+        z: 0.25
+      orientation: 
+        x: 0.0297483506502
+        y: 0.0319012004119
+        z: -0.681349248744
+        w: 0.730657614948
+    gripper_targets: 
+      - 
+        header: 
+          seq: 0
+          stamp: 
+            secs: 0
+            nsecs:         0
+          frame_id: "payload2"
+        name: "payload2_gripper_target"
+        pose: 
+          position: 
+            x: 0.6
+            y: 0.2
+            z: 0.0
+          orientation: 
+            x: 0.706433772215
+            y: -0.706433772211
+            z: -0.0308435645972
+            w: -0.0308435645972
+        pickup_ft_threshold: [250.0, 250.0, 250.0, 250.0, 250.0, 250.0]
+        place_ft_threshold: [500.0, 500.0, 500.0, 500.0, 500.0, 500.0]
+    visual_geometry: 
+      primitives: []
+      primitive_poses: []
+      primitive_colors: []
+      mesh_resources: ['package://industrial_payload_manager/test/meshes/payload2.stl', 'package://industrial_payload_manager/test/meshes/markers/artag_5678.dae',
+  'package://industrial_payload_manager/test/meshes/markers/artag_9_10_11_12.dae']
+      mesh_poses: 
+        - 
+          position: 
+            x: 0.0
+            y: 0.0
+            z: -0.05
+          orientation: 
+            x: 0.0
+            y: 0.0
+            z: 0.0
+            w: 1.0
+        - 
+          position: 
+            x: 0.9
+            y: 0.2
+            z: 0.02
+          orientation: 
+            x: 0.0
+            y: 0.0
+            z: 1.0
+            w: -1.03411553555e-13
+        - 
+          position: 
+            x: 0.0690000000007
+            y: 0.185
+            z: 0.0
+          orientation: 
+            x: 0.0
+            y: 0.0
+            z: 0.707106781185
+            w: 0.707106781188
+      mesh_scales: 
+        - 
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        - 
+          x: 1.0
+          y: 1.0
+          z: 1.0
+        - 
+          x: 1.0
+          y: 1.0
+          z: 1.0
+      mesh_colors: 
+        - 
+          r: 0.0
+          g: 0.5
+          b: 0.0
+          a: 1.0
+        - 
+          r: 0.5
+          g: 0.5
+          b: 0.5
+          a: 1.0
+        - 
+          r: 0.5
+          g: 0.5
+          b: 0.5
+          a: 1.0
+    collision_geometry: 
+      primitives: []
+      primitive_poses: []
+      primitive_colors: []
+      mesh_resources: ['package://industrial_payload_manager/test/meshes/payload2.stl']
+      mesh_poses: 
+        - 
+          position: 
+            x: 0.0
+            y: 0.0
+            z: -0.05
+          orientation: 
+            x: 0.0
+            y: 0.0
+            z: 0.0
+            w: 1.0
+      mesh_scales: 
+        - 
+          x: 1.0
+          y: 1.0
+          z: 1.0
+      mesh_colors: []
+    markers: 
+      - 
+        header: 
+          seq: 0
+          stamp: 
+            secs: 0
+            nsecs:         0
+          frame_id: "payload2"
+        name: "payload2_marker_5"
+        pose: 
+          position: 
+            x: 1.0
+            y: 0.3
+            z: 0.02
+          orientation: 
+            x: 0.0
+            y: 0.0
+            z: 1.0
+            w: -1.03411553555e-13
+        marker: 
+          markersX: 2
+          markersY: 2
+          markerLength: 0.0972
+          markerSpacing: 0.005
+          dictionary: "DICT_6X6_250"
+          firstMarker: 5
+      - 
+        header: 
+          seq: 0
+          stamp: 
+            secs: 0
+            nsecs:         0
+          frame_id: "payload2"
+        name: "payload2_marker_9"
+        pose: 
+          position: 
+            x: 0.1
+            y: 0.05
+            z: 0.0
+          orientation: 
+            x: 0.0
+            y: 0.0
+            z: 0.707106781185
+            w: 0.707106781188
+        marker: 
+          markersX: 4
+          markersY: 1
+          markerLength: 0.062
+          markerSpacing: 0.0074
+          dictionary: "DICT_6X6_250"
+          firstMarker: 9
+    inertia: 
+      m: 0.0
+      com: 
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      ixx: 0.0
+      ixy: 0.0
+      ixz: 0.0
+      iyy: 0.0
+      iyz: 0.0
+      izz: 0.0
+    confidence: 0.1
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1541203515
+        nsecs: 311584949
+      frame_id: "world"
+    name: "payload3"
+    pose: 
+      position: 
+        x: 2.1
+        y: 1.8
+        z: 0.95
+      orientation: 
+        x: 0.0946329354464
+        y: -0.759959409764
+        z: 0.0892565478836
+        w: 0.636819889529
+    gripper_targets: []
+    visual_geometry: 
+      primitives: 
+        - 
+          type: 1
+          dimensions: [0.1, 0.12, 0.3]
+        - 
+          type: 3
+          dimensions: [0.2, 0.07]
+        - 
+          type: 2
+          dimensions: [0.25]
+      primitive_poses: 
+        - 
+          position: 
+            x: -0.2
+            y: -0.22
+            z: 0.32
+          orientation: 
+            x: 0.180239955502
+            y: 0.0746578340504
+            z: 0.375330277518
+            w: 0.906127446353
+        - 
+          position: 
+            x: -0.1
+            y: 0.4
+            z: 0.31
+          orientation: 
+            x: 0.163175911167
+            y: 0.0593911746139
+            z: 0.336824088834
+            w: 0.925416578398
+        - 
+          position: 
+            x: -0.5
+            y: 0.0
+            z: 0.305
+          orientation: 
+            x: 0.0
+            y: 0.0
+            z: 0.0
+            w: 1.0
+      primitive_colors: 
+        - 
+          r: 0.0
+          g: 0.5
+          b: 0.0
+          a: 1.0
+        - 
+          r: 0.5
+          g: 0.0
+          b: 0.0
+          a: 1.0
+        - 
+          r: 0.0
+          g: 0.0
+          b: 0.5
+          a: 1.0
+      mesh_resources: []
+      mesh_poses: []
+      mesh_scales: []
+      mesh_colors: []
+    collision_geometry: 
+      primitives: 
+        - 
+          type: 1
+          dimensions: [0.11, 0.121, 0.31]
+        - 
+          type: 3
+          dimensions: [0.201, 0.071]
+        - 
+          type: 2
+          dimensions: [0.251]
+      primitive_poses: 
+        - 
+          position: 
+            x: -0.201
+            y: -0.221
+            z: 0.321
+          orientation: 
+            x: 0.180239955502
+            y: 0.0746578340504
+            z: 0.375330277518
+            w: 0.906127446353
+        - 
+          position: 
+            x: -0.101
+            y: 0.401
+            z: 0.311
+          orientation: 
+            x: 0.163175911167
+            y: 0.0593911746139
+            z: 0.336824088834
+            w: 0.925416578398
+        - 
+          position: 
+            x: -0.501
+            y: 0.001
+            z: 0.306
+          orientation: 
+            x: 0.0
+            y: 0.0
+            z: 0.0
+            w: 1.0
+      primitive_colors: []
+      mesh_resources: []
+      mesh_poses: []
+      mesh_scales: []
+      mesh_colors: []
+    markers: []
+    inertia: 
+      m: 0.0
+      com: 
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      ixx: 0.0
+      ixy: 0.0
+      ixz: 0.0
+      iyy: 0.0
+      iyz: 0.0
+      izz: 0.0
+    confidence: 0.1
+payload_targets: 
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1541203515
+        nsecs: 311584949
+      frame_id: "fixture1"
+    name: "fixture1_payload1_target"
+    pose: 
+      position: 
+        x: -0.3
+        y: 0.5
+        z: 0.05
+      orientation: 
+        x: 0.0123407149399
+        y: -0.0123407149398
+        z: -0.706999085397
+        w: 0.706999085401
+    confidence: 0.1
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1541203515
+        nsecs: 311584949
+      frame_id: "fixture2"
+    name: "fixture2_payload2_target"
+    pose: 
+      position: 
+        x: -0.2
+        y: 0.6
+        z: 0.05
+      orientation: 
+        x: 0.0123407149399
+        y: -0.0123407149398
+        z: -0.706999085397
+        w: 0.706999085401
+    confidence: 0.1
+link_markers: 
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1541203515
+        nsecs: 311584949
+      frame_id: "link_3"
+    markers: 
+      - 
+        header: 
+          seq: 0
+          stamp: 
+            secs: 0
+            nsecs:         0
+          frame_id: "link_3"
+        name: "link_3_marker_1"
+        pose: 
+          position: 
+            x: 0.4
+            y: 0.1
+            z: 0.05
+          orientation: 
+            x: 0.0
+            y: 0.0
+            z: -0.707106781185
+            w: 0.707106781188
+        marker: 
+          markersX: 2
+          markersY: 2
+          markerLength: 0.0972
+          markerSpacing: 0.005
+          dictionary: "DICT_6X6_250"
+          firstMarker: 1
+delete_payloads: []

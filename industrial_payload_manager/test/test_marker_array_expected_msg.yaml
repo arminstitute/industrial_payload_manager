@@ -1,0 +1,274 @@
+markers: 
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1541296516
+        nsecs: 155368089
+      frame_id: "world"
+    ns: "payload_payload2"
+    id: 0
+    type: 10
+    action: 0
+    pose: 
+      position: 
+        x: 0.749696016136
+        y: 1.50434717179
+        z: 0.200190265095
+      orientation: 
+        x: 0.0297483506502
+        y: 0.0319012004119
+        z: -0.681349248744
+        w: 0.730657614948
+    scale: 
+      x: 1.0
+      y: 1.0
+      z: 1.0
+    color: 
+      r: 0.0
+      g: 0.5
+      b: 0.0
+      a: 1.0
+    lifetime: 
+      secs: 0
+      nsecs:         0
+    frame_locked: True
+    points: []
+    colors: []
+    text: ''
+    mesh_resource: "package://industrial_payload_manager/test/meshes/payload2.stl"
+    mesh_use_embedded_materials: True
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1541296516
+        nsecs: 155494928
+      frame_id: "world"
+    ns: "payload_payload2"
+    id: 1
+    type: 10
+    action: 0
+    pose: 
+      position: 
+        x: 1.01217632996
+        y: 0.617821209945
+        z: 0.191483725489
+      orientation: 
+        x: 0.0319012004119
+        y: -0.0297483506502
+        z: 0.730657614948
+        w: 0.681349248744
+    scale: 
+      x: 1.0
+      y: 1.0
+      z: 1.0
+    color: 
+      r: 0.5
+      g: 0.5
+      b: 0.5
+      a: 1.0
+    lifetime: 
+      secs: 0
+      nsecs:         0
+    frame_locked: True
+    points: []
+    colors: []
+    text: ''
+    mesh_resource: "package://industrial_payload_manager/test/meshes/markers/artag_5678.dae"
+    mesh_use_embedded_materials: True
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1541296516
+        nsecs: 155617952
+      frame_id: "world"
+    ns: "payload_payload2"
+    id: 2
+    type: 10
+    action: 0
+    pose: 
+      position: 
+        x: 0.93934423032
+        y: 1.44433495441
+        z: 0.24398625375
+      orientation: 
+        x: 0.0435928156131
+        y: 0.00152229466552
+        z: 0.0348662801099
+        w: 0.998439628399
+    scale: 
+      x: 1.0
+      y: 1.0
+      z: 1.0
+    color: 
+      r: 0.5
+      g: 0.5
+      b: 0.5
+      a: 1.0
+    lifetime: 
+      secs: 0
+      nsecs:         0
+    frame_locked: True
+    points: []
+    colors: []
+    text: ''
+    mesh_resource: "package://industrial_payload_manager/test/meshes/markers/artag_9_10_11_12.dae"
+    mesh_use_embedded_materials: True
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1541296516
+        nsecs: 155750036
+      frame_id: "world"
+    ns: "payload_payload3"
+    id: 0
+    type: 1
+    action: 0
+    pose: 
+      position: 
+        x: 1.88652850834
+        y: 1.51149535947
+        z: 0.701012059241
+      orientation: 
+        x: -0.0913695880205
+        y: -0.660507495374
+        z: 0.463935733859
+        w: 0.583219582823
+    scale: 
+      x: 0.1
+      y: 0.12
+      z: 0.3
+    color: 
+      r: 0.0
+      g: 0.5
+      b: 0.0
+      a: 1.0
+    lifetime: 
+      secs: 0
+      nsecs:         0
+    frame_locked: True
+    points: []
+    colors: []
+    text: ''
+    mesh_resource: ''
+    mesh_use_embedded_materials: False
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1541296516
+        nsecs: 155874013
+      frame_id: "world"
+    ns: "payload_payload3"
+    id: 1
+    type: 3
+    action: 0
+    pose: 
+      position: 
+        x: 1.71927837127
+        y: 2.11005846677
+        z: 0.791839358223
+      orientation: 
+        x: -0.0697851339177
+        y: -0.682767689176
+        z: 0.426723198515
+        w: 0.588952994347
+    scale: 
+      x: 0.14
+      y: 0.14
+      z: 0.2
+    color: 
+      r: 0.5
+      g: 0.0
+      b: 0.0
+      a: 1.0
+    lifetime: 
+      secs: 0
+      nsecs:         0
+    frame_locked: True
+    points: []
+    colors: []
+    text: ''
+    mesh_resource: ''
+    mesh_use_embedded_materials: False
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1541296516
+        nsecs: 156001091
+      frame_id: "world"
+    ns: "payload_payload3"
+    id: 2
+    type: 2
+    action: 0
+    pose: 
+      position: 
+        x: 1.8954435343
+        y: 1.73693859655
+        z: 0.404834968348
+      orientation: 
+        x: 0.0946329354464
+        y: -0.759959409764
+        z: 0.0892565478836
+        w: 0.636819889529
+    scale: 
+      x: 0.5
+      y: 0.5
+      z: 0.5
+    color: 
+      r: 0.0
+      g: 0.0
+      b: 0.5
+      a: 1.0
+    lifetime: 
+      secs: 0
+      nsecs:         0
+    frame_locked: True
+    points: []
+    colors: []
+    text: ''
+    mesh_resource: ''
+    mesh_use_embedded_materials: False
+  - 
+    header: 
+      seq: 0
+      stamp: 
+        secs: 1541296516
+        nsecs: 156151056
+      frame_id: "world"
+    ns: "payload_payload1"
+    id: 0
+    type: 10
+    action: 0
+    pose: 
+      position: 
+        x: 0.749908675073
+        y: -0.70261520373
+        z: 0.200068523262
+      orientation: 
+        x: -0.0188301207692
+        y: -0.0181840362552
+        z: -0.719093300553
+        w: 0.694420328387
+    scale: 
+      x: 1.0
+      y: 1.0
+      z: 1.0
+    color: 
+      r: 0.0
+      g: 0.5
+      b: 0.5
+      a: 1.0
+    lifetime: 
+      secs: 0
+      nsecs:         0
+    frame_locked: True
+    points: []
+    colors: []
+    text: ''
+    mesh_resource: "package://industrial_payload_manager/test/meshes/payload1.stl"
+    mesh_use_embedded_materials: True

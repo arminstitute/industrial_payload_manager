@@ -1,0 +1,9 @@
+<robot name="payload" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="$(find industrial_payload_manager)/test/urdf/payload2.xacro"/>
+
+  <joint name="payload2_initial_pose" type="fixed">
+    <parent link="world"/>
+    <child link="payload2"/>
+    <origin rpy="0 ${radians(5)} ${radians(-86)}" xyz="0.75 1.5 0.25"/>
+  </joint>
+</robot>

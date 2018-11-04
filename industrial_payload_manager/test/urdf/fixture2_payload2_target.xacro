@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<robot name="fixture2_payload2_target" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <link name="fixture2_payload2_target"/>
+
+  <joint name="fixture2_to_payload2_target" type="fixed">
+    <parent link="fixture2"/>
+    <child link="fixture2_payload2_target"/>
+    <origin rpy="${radians(2)} 0 ${radians(-90)}" xyz="-0.2 0.6 0.05"/>
+  </joint>
+
+</robot>

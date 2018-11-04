@@ -1,0 +1,5 @@
+<launch>
+<include file="$(find industrial_payload_manager)/test/load_payloads.launch"/>
+<node pkg="rostopic" type="rostopic" name="expected_msg_pub" args="pub /expected_payload industrial_payload_manager/PayloadArray --latch --file=$(find industrial_payload_manager)/test/test_urdf_to_payload_expected_payload_msg.yaml"/>
+<test test-name="test_urdf_to_payload" pkg="industrial_payload_manager" type="test_urdf_to_payload.py" time-limit="20"/>
+</launch>

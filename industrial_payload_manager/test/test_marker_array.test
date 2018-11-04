@@ -1,0 +1,7 @@
+<launch>
+<node pkg="rostopic" type="rostopic" name="expected_marker_array_msg_pub" args="pub /expected_payload_marker_array visualization_msgs/MarkerArray --latch --file=$(find industrial_payload_manager)/test/test_marker_array_expected_msg.yaml"/>
+<include file="$(find industrial_payload_manager)/test/load_payloads.launch"/>
+<include file="$(find industrial_payload_manager)/test/load_test_scene.launch"/>
+<node name="industrial_payload_manager" pkg="industrial_payload_manager" type="industrial_payload_manager"/>
+<test test-name="test_marker_array" pkg="industrial_payload_manager" type="test_marker_array.py" time-limit="20"/>
+</launch>
