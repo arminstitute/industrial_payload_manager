@@ -224,7 +224,8 @@ class PayloadManager(object):
         
         aco = AttachedCollisionObject()    
         aco.link_name = payload.attached_link
-        aco.object = co       
+        aco.object = co
+        aco.touch_links = touch_links     
         
         self._pub_aco.publish(aco)
     
