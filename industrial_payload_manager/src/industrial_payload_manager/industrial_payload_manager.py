@@ -42,7 +42,7 @@ from .srv import UpdatePayloadPose, UpdatePayloadPoseRequest, UpdatePayloadPoseR
 import general_robotics_toolbox.ros_msg as rox_msg
 from visualization_msgs.msg import Marker, MarkerArray
 from urdf_parser_py.urdf import URDF
-from moveit_msgs.msg import CollisionObject, AttachedCollisionObject
+from moveit_msgs.msg import CollisionObject, AttachedCollisionObject, PlanningScene
 from shape_msgs.msg import Mesh, MeshTriangle, SolidPrimitive
 from geometry_msgs.msg import Point, Pose, Vector3
 
@@ -78,15 +78,16 @@ class PayloadManager(object):
         self.link_markers=dict()
         self.payloads_lock=threading.Lock()
         self._ros_id=1
-        self._pub_aco_listener = PayloadManagerSubscriberListener(self)
-        self._pub_aco=rospy.Publisher('/attached_collision_object', AttachedCollisionObject, queue_size=100, subscriber_listener = self._pub_aco_listener)        
+        #self._pub_aco_listener = PayloadManagerSubscriberListener(self)
+        #self._pub_aco=rospy.Publisher('/attached_collision_object', AttachedCollisionObject, queue_size=100, subscriber_listener = self._pub_aco_listener)
+        self._pub_planning_scene=rospy.Publisher("planning_scene", PlanningScene, latch = True)        
         self._payload_msg_pub=rospy.Publisher("payload", PayloadArray, queue_size=100)
         self.rviz_cam_publisher=rospy.Publisher("payload_marker_array", MarkerArray, queue_size=100, latch=True)
         self._payload_msg_sub=rospy.Subscriber("payload", PayloadArray, self._payload_msg_cb)
         self._update_payload_pose_srv=rospy.Service("update_payload_pose", UpdatePayloadPose, self._update_payload_pose_srv_cb)
         self._get_payload_array_srv=rospy.Service("get_payload_array", GetPayloadArray, self._get_payload_array_srv_cb)
 
-    def _payload_msg_cb(self, msg):
+    def _payload_msg_cb(self, msg):                
         try:
             with self.payloads_lock:            
                 for p in msg.payloads:
@@ -98,7 +99,7 @@ class PayloadManager(object):
                         self._ros_id += 1
                         payload=Payload(p, ros_id)
                         self.payloads[p.name]=payload
-                        self._update_payload_mesh(payload)
+                        #self._update_payload_mesh(payload)
                     else:
                         payload = self.payloads[p.name]
                         #ignore stale data
@@ -106,7 +107,7 @@ class PayloadManager(object):
                             continue
                         
                         payload.payload_msg=p                
-                        self._update_payload_mesh(payload) 
+                        #self._update_payload_mesh(payload) 
                     
                 for t in msg.payload_targets:
                     if t.name in self.payloads or t.name in self.link_markers:
@@ -134,33 +135,56 @@ class PayloadManager(object):
                             continue
                         self.link_markers[l.header.frame_id]=l
                 
+                delete_payloads=[]
                 for d in msg.delete_payloads:
                     if d in self.payloads:
                         payload = self.payloads[d]
                         del self.payloads[d]
-                        self._delete_payload_mesh(payload)                        
+                        delete_payloads.append(payload)
+                        #self._delete_payload_mesh(payload)                        
                     if d in self.payload_targets:
                         del self.payload_targets[d]
                     if d in self.link_markers:
                         del self.link_markers[d]
+            
+            self._publish_planning_scene(delete_payloads)
+            self._publish_rviz_sim_cameras()
         except:
             traceback.print_exc()
-            
-    def _update_payload_mesh(self, payload):
-        rospy.logdebug("Update payload mesh %s", payload.payload_msg.name)
+    
+    def _publish_planning_scene(self, delete_payloads):
+        planning_scene = PlanningScene()
+        planning_scene.is_diff = True
+        planning_scene.robot_state.is_diff=True
         
-        self._remove_payload_from_planning_scene(payload)
-        self._add_payload_to_planning_scene(payload)
-        self._update_rviz_sim_cameras()
+        for p in self.payloads.itervalues():
+            aco_remove = self._remove_payload_from_planning_scene_msg(p)
+            aco_add = self._add_payload_to_planning_scene_msg(p)
+            planning_scene.robot_state.attached_collision_objects.append(aco_remove)
+            planning_scene.robot_state.attached_collision_objects.append(aco_add)
+        
+        for d in delete_payloads:
+            aco = self._remove_payload_from_planning_scene_msg(d)
+            planning_scene.robot_state.attached_collision_objects.append(aco)
+            
+        self._pub_planning_scene.publish(planning_scene)
+        
+    
+    #def _update_payload_mesh(self, payload):
+    #    rospy.logdebug("Update payload mesh %s", payload.payload_msg.name)
+    #   
+    #    self._remove_payload_from_planning_scene(payload)
+    #    self._add_payload_to_planning_scene(payload)
+    #    self._update_rviz_sim_cameras()
         
             
     
-    def _delete_payload_mesh(self, payload):
-        rospy.logdebug("Delete payload mesh %s", payload.payload_msg.name)
-        self._update_rviz_sim_cameras()
-        self._remove_payload_from_planning_scene(payload)
+    #def _delete_payload_mesh(self, payload):
+    #    rospy.logdebug("Delete payload mesh %s", payload.payload_msg.name)
+    #    self._update_rviz_sim_cameras()
+    #    self._remove_payload_from_planning_scene(payload)
     
-    def _remove_payload_from_planning_scene(self, payload):
+    def _remove_payload_from_planning_scene_msg(self, payload):
         msg=payload.payload_msg
         
         aco = AttachedCollisionObject()
@@ -170,11 +194,12 @@ class PayloadManager(object):
         else:
             aco.link_name = ""
         aco.object.id = msg.name
-        self._pub_aco.publish(aco)
+        #self._pub_aco.publish(aco)
         
         payload.attached_link = None
+        return aco
             
-    def _add_payload_to_planning_scene(self, payload):
+    def _add_payload_to_planning_scene_msg(self, payload):
         
         msg=payload.payload_msg
         
@@ -227,9 +252,10 @@ class PayloadManager(object):
         aco.object = co
         aco.touch_links = touch_links     
         
-        self._pub_aco.publish(aco)
+        #self._pub_aco.publish(aco)
+        return aco
     
-    def _update_rviz_sim_cameras(self):
+    def _publish_rviz_sim_cameras(self):
         
         marker_array=MarkerArray()
         for p in self.payloads:
@@ -304,7 +330,8 @@ class PayloadManager(object):
                 id += 1
                 
         marker_array._check_types
-        self.rviz_cam_publisher.publish(marker_array)    
+        #self.rviz_cam_publisher.publish(marker_array)
+        return marker_array    
     
     def _update_payload_pose(self, payload_name, pose, parent_frame_id = None, confidence = 0.1):
         with self.payloads_lock:
