@@ -4,15 +4,20 @@ import rospy
 import unittest
 from industrial_payload_manager.msg import Payload, PayloadTarget, PayloadArray, \
     GripperTarget, ArucoGridboardWithPose, LinkMarkers
+from industrial_payload_manager.srv import UpdatePayloadPose, UpdatePayloadPoseRequest
 from moveit_msgs.msg import AttachedCollisionObject, CollisionObject
 import numpy as np
 import Queue
+from industrial_payload_manager.payload_transform_listener import PayloadTransformListener
+import general_robotics_toolbox as rox
+import general_robotics_toolbox.ros_msg as rox_msg
 
 class TestAttachedCollisionObject(unittest.TestCase):
     
     def __init__(self, *args, **kwargs):
         super(TestAttachedCollisionObject,self).__init__(*args, **kwargs)
         self._msg_queue = Queue.Queue()
+        self.tf_listener=PayloadTransformListener()
     
     def _aco_cb(self, msg):
         self._msg_queue.put(msg)
@@ -21,6 +26,8 @@ class TestAttachedCollisionObject(unittest.TestCase):
         payload_expected_msg = dict()
         payload_expected_msg["payload1"] = rospy.wait_for_message("/expected_attached_collision_object_1", AttachedCollisionObject, timeout=10)
         payload_expected_msg["payload2"] = rospy.wait_for_message("/expected_attached_collision_object_2", AttachedCollisionObject, timeout=10)
+        payload_expected_msg["payload2_2"] = rospy.wait_for_message("/expected_attached_collision_object_2_2", AttachedCollisionObject, timeout=10)
+        payload_expected_msg["payload2_3"] = rospy.wait_for_message("/expected_attached_collision_object_2_3", AttachedCollisionObject, timeout=10)
         payload_expected_msg["payload3"] = rospy.wait_for_message("/expected_attached_collision_object_3", AttachedCollisionObject, timeout=10)
         
         found_payload = {"payload1": False, "payload2": False, "payload3": False}
@@ -41,7 +48,54 @@ class TestAttachedCollisionObject(unittest.TestCase):
                 self._assert_attached_collision_object_equal(msg, expected_msg)
                 
          
-        assert all(found_payload.itervalues())   
+        assert all(found_payload.itervalues())
+        
+        rospy.sleep(rospy.Duration(1))
+        
+        update_pose_proxy = rospy.ServiceProxy("update_payload_pose", UpdatePayloadPose)
+        
+        payload2_to_gripper_target_tf=self.tf_listener.lookupTransform("payload2", "payload2_gripper_target", rospy.Time(0))
+               
+        req = UpdatePayloadPoseRequest()
+        req.header.frame_id = "vacuum_gripper_tool"
+        req.name="payload2"
+        req.pose = rox_msg.transform2pose_msg(payload2_to_gripper_target_tf.inv())
+        req.confidence = 0.5
+        res = update_pose_proxy(req)
+        assert res.success
+        
+        msg = self._msg_queue.get(timeout=10)
+        assert msg.object.id == "payload2"
+        assert msg.object.operation == CollisionObject.REMOVE
+        
+        msg = self._msg_queue.get(timeout=10)
+        assert msg.object.id == "payload2"  
+        assert msg.object.operation == CollisionObject.ADD
+        self._assert_attached_collision_object_equal(msg, payload_expected_msg["payload2_2"])
+        
+        rospy.sleep(rospy.Duration(1))
+        
+        world_to_fixture2_payload2_target_tf=self.tf_listener.lookupTransform("world", "fixture2_payload2_target", rospy.Time(0))
+        
+        #Add in an offset to represent a final placement error
+        fixture2_payload2_target_to_payload2_tf=rox.Transform(rox.rot([0,0,1], np.deg2rad(5)), [0.1,0,0], "fixture2_payload2_target", "payload2")
+        
+        req2 = UpdatePayloadPoseRequest()
+        req2.header.frame_id = "world"
+        req2.name="payload2"
+        req2.pose = rox_msg.transform2pose_msg(world_to_fixture2_payload2_target_tf * fixture2_payload2_target_to_payload2_tf)
+        res2 = update_pose_proxy(req2)
+        assert res2.success
+        
+        msg = self._msg_queue.get(timeout=10)
+        assert msg.object.id == "payload2"
+        assert msg.object.operation == CollisionObject.REMOVE
+        
+        msg = self._msg_queue.get(timeout=10)
+        assert msg.object.id == "payload2"  
+        assert msg.object.operation == CollisionObject.ADD
+        self._assert_attached_collision_object_equal(msg, payload_expected_msg["payload2_3"])
+        
         
     def _assert_attached_collision_object_equal(self, aco1, aco2):
         self.assertEqual(aco1.link_name, aco2.link_name)

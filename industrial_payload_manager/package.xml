@@ -61,6 +61,7 @@
   <depend>tf</depend>
   <depend>resource_retriever</depend>
   <depend>urdfdom_py</depend>
+  <depend>tesseract_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
