@@ -1,0 +1,16 @@
+<launch>
+<param name="use_gui" value="false" />
+
+<node pkg="rostopic" type="rostopic" name="test_tesseract_diff_expected_tesseract_diff_msg_pub" args="pub /expected_tesseract_diff_1 tesseract_msgs/TesseractState --latch --file=$(find industrial_payload_manager)/test/test_tesseract_diff_expected_tesseract_diff_msg.yaml"/>
+
+<node pkg="rostopic" type="rostopic" name="test_tesseract_diff_expected_tesseract_diff_msg2_pub" args="pub /expected_tesseract_diff_2 tesseract_msgs/TesseractState --latch --file=$(find industrial_payload_manager)/test/test_tesseract_diff_expected_tesseract_diff_msg2.yaml"/>
+
+<node pkg="rostopic" type="rostopic" name="test_tesseract_diff_expected_tesseract_diff_msg3_pub" args="pub /expected_tesseract_diff_3 tesseract_msgs/TesseractState --latch --file=$(find industrial_payload_manager)/test/test_tesseract_diff_expected_tesseract_diff_msg3.yaml"/>
+
+<include file="$(find industrial_payload_manager)/test/load_payloads.launch"/>
+<include file="$(find industrial_payload_manager)/test/load_test_scene.launch"/>
+<node name="industrial_payload_manager" pkg="industrial_payload_manager" type="industrial_payload_manager"/>
+<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+<test test-name="test_tesseract_diff" pkg="industrial_payload_manager" type="test_tesseract_diff.py" time-limit="20"/>
+</launch>

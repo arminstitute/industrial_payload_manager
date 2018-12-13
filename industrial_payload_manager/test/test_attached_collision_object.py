@@ -5,7 +5,7 @@ import unittest
 from industrial_payload_manager.msg import Payload, PayloadTarget, PayloadArray, \
     GripperTarget, ArucoGridboardWithPose, LinkMarkers
 from industrial_payload_manager.srv import UpdatePayloadPose, UpdatePayloadPoseRequest
-from moveit_msgs.msg import AttachedCollisionObject, CollisionObject
+from moveit_msgs.msg import CollisionObject, PlanningScene
 import numpy as np
 import Queue
 from industrial_payload_manager.payload_transform_listener import PayloadTransformListener
@@ -16,40 +16,14 @@ class TestAttachedCollisionObject(unittest.TestCase):
     
     def __init__(self, *args, **kwargs):
         super(TestAttachedCollisionObject,self).__init__(*args, **kwargs)
-        self._msg_queue = Queue.Queue()
         self.tf_listener=PayloadTransformListener()
-    
-    def _aco_cb(self, msg):
-        self._msg_queue.put(msg)
-    
+            
     def test_attached_collision_object(self):
-        payload_expected_msg = dict()
-        payload_expected_msg["payload1"] = rospy.wait_for_message("/expected_attached_collision_object_1", AttachedCollisionObject, timeout=10)
-        payload_expected_msg["payload2"] = rospy.wait_for_message("/expected_attached_collision_object_2", AttachedCollisionObject, timeout=10)
-        payload_expected_msg["payload2_2"] = rospy.wait_for_message("/expected_attached_collision_object_2_2", AttachedCollisionObject, timeout=10)
-        payload_expected_msg["payload2_3"] = rospy.wait_for_message("/expected_attached_collision_object_2_3", AttachedCollisionObject, timeout=10)
-        payload_expected_msg["payload3"] = rospy.wait_for_message("/expected_attached_collision_object_3", AttachedCollisionObject, timeout=10)
         
-        found_payload = {"payload1": False, "payload2": False, "payload3": False}
-        found_remove_payload = {"payload1": False, "payload2": False, "payload3": False}
-        
-        rospy.Subscriber("/attached_collision_object", AttachedCollisionObject, self._aco_cb)
-        
-        while not all(found_payload.itervalues()):
-            msg = self._msg_queue.get(timeout=10)
-            if msg.object.operation == CollisionObject.REMOVE:
-                assert msg.object.id in found_remove_payload
-                found_remove_payload[msg.object.id] = True
-            elif msg.object.operation == CollisionObject.ADD:
-                assert msg.object.id in found_payload
-                assert found_remove_payload[msg.object.id]
-                found_payload[msg.object.id] = True
-                expected_msg = payload_expected_msg[msg.object.id]
-                self._assert_attached_collision_object_equal(msg, expected_msg)
-                
-         
-        assert all(found_payload.itervalues())
-        
+        expected_scene_1 = rospy.wait_for_message("/expected_planning_scene_1", PlanningScene, timeout=10)        
+        scene_1 = rospy.wait_for_message('/planning_scene', PlanningScene, timeout=10)        
+        self._assert_planning_scene_equal(expected_scene_1, scene_1)
+                        
         rospy.sleep(rospy.Duration(1))
         
         update_pose_proxy = rospy.ServiceProxy("update_payload_pose", UpdatePayloadPose)
@@ -64,17 +38,10 @@ class TestAttachedCollisionObject(unittest.TestCase):
         res = update_pose_proxy(req)
         assert res.success
         
-        msg = self._msg_queue.get(timeout=10)
-        assert msg.object.id == "payload2"
-        assert msg.object.operation == CollisionObject.REMOVE
-        
-        msg = self._msg_queue.get(timeout=10)
-        assert msg.object.id == "payload2"  
-        assert msg.object.operation == CollisionObject.ADD
-        self._assert_attached_collision_object_equal(msg, payload_expected_msg["payload2_2"])
-        
-        rospy.sleep(rospy.Duration(1))
-        
+        expected_scene_2 = rospy.wait_for_message("/expected_planning_scene_2", PlanningScene, timeout=10)        
+        scene_2 = rospy.wait_for_message('/planning_scene', PlanningScene, timeout=10)        
+        self._assert_planning_scene_equal(expected_scene_2, scene_2)
+                        
         world_to_fixture2_payload2_target_tf=self.tf_listener.lookupTransform("world", "fixture2_payload2_target", rospy.Time(0))
         
         #Add in an offset to represent a final placement error
@@ -87,16 +54,28 @@ class TestAttachedCollisionObject(unittest.TestCase):
         res2 = update_pose_proxy(req2)
         assert res2.success
         
-        msg = self._msg_queue.get(timeout=10)
-        assert msg.object.id == "payload2"
-        assert msg.object.operation == CollisionObject.REMOVE
+        expected_scene_3 = rospy.wait_for_message("/expected_planning_scene_3", PlanningScene, timeout=10)        
+        scene_3 = rospy.wait_for_message('/planning_scene', PlanningScene, timeout=10)        
+        self._assert_planning_scene_equal(expected_scene_3, scene_3)
+       
+    
+    def _assert_planning_scene_equal(self, scene1, scene2):
+        self.assertEqual(scene1.name, scene2.name)
+        self.assertEqual(scene1.robot_model_name, scene2.robot_model_name)
+        self.assertEqual(scene1.fixed_frame_transforms, scene2.fixed_frame_transforms)
+        self.assertEqual(scene1.link_padding, scene2.link_padding)
+        self.assertEqual(scene1.link_scale, scene2.link_scale)
+        self.assertEqual(scene1.object_colors, scene2.object_colors)
+        self.assertEqual(scene1.world.collision_objects,scene2.world.collision_objects)
+        self.assertEqual(scene1.is_diff, scene2.is_diff)
         
-        msg = self._msg_queue.get(timeout=10)
-        assert msg.object.id == "payload2"  
-        assert msg.object.operation == CollisionObject.ADD
-        self._assert_attached_collision_object_equal(msg, payload_expected_msg["payload2_3"])
-        
-        
+        self.assertEqual(scene1.robot_state.is_diff, scene2.robot_state.is_diff)
+        self.assertEqual(len(scene1.robot_state.attached_collision_objects),len(scene2.robot_state.attached_collision_objects))
+        for i in xrange(len(scene1.robot_state.attached_collision_objects)):
+            self._assert_attached_collision_object_equal(
+                scene1.robot_state.attached_collision_objects[i],
+                scene2.robot_state.attached_collision_objects[i])
+    
     def _assert_attached_collision_object_equal(self, aco1, aco2):
         self.assertEqual(aco1.link_name, aco2.link_name)
         self._assert_collision_object_equal(aco1.object, aco2.object)

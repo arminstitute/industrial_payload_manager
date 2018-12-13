@@ -209,6 +209,7 @@ include_directories(
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   add_rostest(test/test_attached_collision_object.test)
+  add_rostest(test/test_tesseract_diff.test)
   add_rostest(test/test_marker_array.test)
   add_rostest(test/test_urdf_to_payload.test)
 endif()

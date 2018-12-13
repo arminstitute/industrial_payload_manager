@@ -45,6 +45,7 @@ from urdf_parser_py.urdf import URDF
 from moveit_msgs.msg import CollisionObject, AttachedCollisionObject, PlanningScene
 from shape_msgs.msg import Mesh, MeshTriangle, SolidPrimitive
 from geometry_msgs.msg import Point, Pose, Vector3
+from std_msgs.msg import Int32
 
 # Load pyassimp, based on moveit_commander planning_scene_interface.py
 try:
@@ -56,6 +57,13 @@ except:
     except:
         pyassimp = False
         print("Failed to import pyassimp, see https://github.com/ros-planning/moveit/issues/86 for more info")
+
+try:
+    from tesseract_msgs.msg import  TesseractState, AttachableObject, AttachedBodyInfo
+    from tesseract_msgs.srv import ModifyTesseractEnv, ModifyTesseractEnvRequest
+    _use_tesseract=True
+except:
+    _use_tesseract=False
 
 class Payload(object):
     def __init__(self, payload_msg, ros_id):
@@ -80,12 +88,16 @@ class PayloadManager(object):
         self._ros_id=1
         #self._pub_aco_listener = PayloadManagerSubscriberListener(self)
         #self._pub_aco=rospy.Publisher('/attached_collision_object', AttachedCollisionObject, queue_size=100, subscriber_listener = self._pub_aco_listener)
-        self._pub_planning_scene=rospy.Publisher("planning_scene", PlanningScene, latch = True)        
+        self._pub_planning_scene=rospy.Publisher("planning_scene", PlanningScene, latch = True, queue_size=10)        
         self._payload_msg_pub=rospy.Publisher("payload", PayloadArray, queue_size=100)
         self.rviz_cam_publisher=rospy.Publisher("payload_marker_array", MarkerArray, queue_size=100, latch=True)
         self._payload_msg_sub=rospy.Subscriber("payload", PayloadArray, self._payload_msg_cb)
         self._update_payload_pose_srv=rospy.Service("update_payload_pose", UpdatePayloadPose, self._update_payload_pose_srv_cb)
         self._get_payload_array_srv=rospy.Service("get_payload_array", GetPayloadArray, self._get_payload_array_srv_cb)
+
+        if _use_tesseract:
+            self._tesseract_pub = rospy.Publisher("tesseract_diff", TesseractState, latch=True, queue_size=10)
+            
 
     def _payload_msg_cb(self, msg):                
         try:
@@ -149,6 +161,8 @@ class PayloadManager(object):
             
             self._publish_planning_scene(delete_payloads)
             self._publish_rviz_sim_cameras()
+            if (_use_tesseract):
+                self._publish_tesseract_scene(delete_payloads)
         except:
             traceback.print_exc()
     
@@ -169,6 +183,21 @@ class PayloadManager(object):
             
         self._pub_planning_scene.publish(planning_scene)
         
+    def _publish_tesseract_scene(self, delete_payloads):
+        env=TesseractState()
+        env.is_diff=True
+        for p in self.payloads.itervalues():
+            body_remove = self._remove_payload_from_tesseract_msg(p)
+            attach_obj, body_add = self._add_payload_to_tesseract_msgs(p)
+            env.attached_bodies.append(body_remove)
+            env.attached_bodies.append(body_add)
+            env.attachable_objects.append(attach_obj)
+        
+        for d in delete_payloads:
+            body_remove = self._remove_payload_from_tesseract_msg(d)
+            env.attached_bodies.append(body_remove)
+    
+        self._tesseract_pub.publish(env)
     
     #def _update_payload_mesh(self, payload):
     #    rospy.logdebug("Update payload mesh %s", payload.payload_msg.name)
@@ -255,6 +284,89 @@ class PayloadManager(object):
         #self._pub_aco.publish(aco)
         return aco
     
+    def _remove_payload_from_tesseract_msg(self, payload):
+        msg=payload.payload_msg
+        
+        body_info = AttachedBodyInfo()
+        body_info.operation = AttachedBodyInfo.REMOVE
+        
+        body_info.object_name = msg.name
+        #self._pub_aco.publish(aco)        
+        payload.attached_link = None
+        return body_info
+    
+    def _add_payload_to_tesseract_msgs(self, payload):
+        
+        if not _use_tesseract:
+            return
+        msg=payload.payload_msg
+        
+        payload.attached_link=msg.header.frame_id
+                
+        attach_obj = AttachableObject()
+        attach_obj.name = payload.payload_msg.name
+                
+        urdf_root=self.urdf.get_root()
+        urdf_chain=self.urdf.get_chain(urdf_root, payload.attached_link, joints=True, links=False)
+        urdf_chain.reverse()
+        touch_links=[]
+        touch_root = None        
+        for j_name in urdf_chain:
+            j=self.urdf.joint_map[j_name]
+            if j.type != "fixed":
+                break
+            touch_root=j.parent
+        
+        def _touch_recurse(touch):
+            ret=[touch]
+            if touch in self.urdf.child_map:                
+                for c_j,c in self.urdf.child_map[touch]:
+                    if self.urdf.joint_map[c_j].type == "fixed":
+                        ret.extend(_touch_recurse(c))
+            return ret
+        
+        if touch_root is not None:
+            touch_links.extend(_touch_recurse(touch_root))        
+        
+        for i in xrange(len(msg.collision_geometry.mesh_resources)):
+            
+            mesh_filename=urlparse.urlparse(resource_retriever.get_filename(msg.collision_geometry.mesh_resources[i])).path
+            mesh_pose = msg.collision_geometry.mesh_poses[i]            
+            mesh_scale=msg.collision_geometry.mesh_scales[i]
+            mesh_scale = (mesh_scale.x, mesh_scale.y, mesh_scale.z)
+                        
+            mesh_msg = load_mesh_file_to_mesh_msg(mesh_filename, mesh_scale)
+            attach_obj.collision.meshes.extend(mesh_msg)
+            attach_obj.collision.mesh_poses.extend([mesh_pose]*len(mesh_msg))
+            attach_obj.collision.mesh_collision_object_types.extend([Int32(0)]*len(mesh_msg))
+            attach_obj.visual.meshes.extend(mesh_msg)
+            attach_obj.visual.mesh_poses.extend([mesh_pose]*len(mesh_msg))
+                                    
+            if len(msg.collision_geometry.mesh_colors) > i:
+                mesh_color=msg.collision_geometry.mesh_colors[i]
+                attach_obj.visual.mesh_colors.extend([mesh_color]*len(mesh_msg))
+                attach_obj.collision.mesh_colors.extend([mesh_color]*len(mesh_msg))
+        
+        for i in xrange(len(msg.collision_geometry.primitives)):
+            attach_obj.collision.primitives.append(msg.collision_geometry.primitives[i])
+            primitive_pose = msg.collision_geometry.primitive_poses[i]
+            attach_obj.collision.primitive_poses.append(primitive_pose)
+            attach_obj.collision.primitive_collision_object_types.append(Int32(0))
+            attach_obj.visual.primitives.append(msg.collision_geometry.primitives[i])
+            attach_obj.visual.primitive_poses.append(primitive_pose)            
+            if len(msg.collision_geometry.mesh_colors) > i:
+                attach_obj.collision.primitive_colors.append(msg.collision_geometry.mesh_colors[i])
+                attach_obj.visual.primitive_colors.append(msg.collision_geometry.mesh_colors[i])
+        
+        body_info = AttachedBodyInfo()        
+        body_info.parent_link_name=msg.header.frame_id
+        body_info.object_name=payload.payload_msg.name
+        body_info.transform=msg.pose
+        body_info.touch_links=touch_links
+                
+        #self._pub_aco.publish(aco)
+        return attach_obj, body_info
+    
     def _publish_rviz_sim_cameras(self):
         
         marker_array=MarkerArray()
@@ -330,8 +442,7 @@ class PayloadManager(object):
                 id += 1
                 
         marker_array._check_types
-        #self.rviz_cam_publisher.publish(marker_array)
-        return marker_array    
+        self.rviz_cam_publisher.publish(marker_array)            
     
     def _update_payload_pose(self, payload_name, pose, parent_frame_id = None, confidence = 0.1):
         with self.payloads_lock:

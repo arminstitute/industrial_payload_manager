@@ -1,10 +1,12 @@
 <launch>
 <param name="use_gui" value="false" />
-<node pkg="rostopic" type="rostopic" name="expected_attached_collision_object1_msg_pub" args="pub /expected_attached_collision_object_1 moveit_msgs/AttachedCollisionObject --latch --file=$(find industrial_payload_manager)/test/test_attached_collision_object_expected_payload1_msg.yaml"/>
-<node pkg="rostopic" type="rostopic" name="expected_attached_collision_object2_msg_pub" args="pub /expected_attached_collision_object_2 moveit_msgs/AttachedCollisionObject --latch --file=$(find industrial_payload_manager)/test/test_attached_collision_object_expected_payload2_msg.yaml"/>
-<node pkg="rostopic" type="rostopic" name="expected_attached_collision_object2_msg2_pub" args="pub /expected_attached_collision_object_2_2 moveit_msgs/AttachedCollisionObject --latch --file=$(find industrial_payload_manager)/test/test_attached_collision_object_expected_payload2_msg2.yaml"/>
-<node pkg="rostopic" type="rostopic" name="expected_attached_collision_object2_msg3_pub" args="pub /expected_attached_collision_object_2_3 moveit_msgs/AttachedCollisionObject --latch --file=$(find industrial_payload_manager)/test/test_attached_collision_object_expected_payload2_msg3.yaml"/>
-<node pkg="rostopic" type="rostopic" name="expected_attached_collision_object3_msg_pub" args="pub /expected_attached_collision_object_3 moveit_msgs/AttachedCollisionObject --latch --file=$(find industrial_payload_manager)/test/test_attached_collision_object_expected_payload3_msg.yaml"/>
+
+<node pkg="rostopic" type="rostopic" name="test_attached_collision_object_expected_planning_scene_msg_pub" args="pub /expected_planning_scene_1 moveit_msgs/PlanningScene --latch --file=$(find industrial_payload_manager)/test/test_attached_collision_object_expected_planning_scene_msg.yaml"/>
+
+<node pkg="rostopic" type="rostopic" name="test_attached_collision_object_expected_planning_scene_msg2_pub" args="pub /expected_planning_scene_2 moveit_msgs/PlanningScene --latch --file=$(find industrial_payload_manager)/test/test_attached_collision_object_expected_planning_scene_msg2.yaml"/>
+
+<node pkg="rostopic" type="rostopic" name="test_attached_collision_object_expected_planning_scene_msg3_pub" args="pub /expected_planning_scene_3 moveit_msgs/PlanningScene --latch --file=$(find industrial_payload_manager)/test/test_attached_collision_object_expected_planning_scene_msg3.yaml"/>
+
 <include file="$(find industrial_payload_manager)/test/load_payloads.launch"/>
 <include file="$(find industrial_payload_manager)/test/load_test_scene.launch"/>
 <node name="industrial_payload_manager" pkg="industrial_payload_manager" type="industrial_payload_manager"/>
