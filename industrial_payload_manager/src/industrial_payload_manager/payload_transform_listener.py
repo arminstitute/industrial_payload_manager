@@ -58,7 +58,7 @@ class PayloadTransformListener(rox_tf.TransformListener):
             t.child_frame_id=p.name
             t.transform.rotation = p.pose.orientation
             t.transform.translation = _point_to_vector3(p.pose.position)
-            self.ros_listener.setTransform(t)
+            self.ros_listener._buffer.set_transform_static(t,"default_authority")
             
             for g in p.gripper_targets:
                 t=TransformStamped()
@@ -67,7 +67,7 @@ class PayloadTransformListener(rox_tf.TransformListener):
                 t.child_frame_id=g.name
                 t.transform.rotation = g.pose.orientation
                 t.transform.translation = _point_to_vector3(g.pose.position)
-                self.ros_listener.setTransform(t)
+                self.ros_listener._buffer.set_transform_static(t,"default_authority")
                 
             for m in p.markers:
                 t=TransformStamped()
@@ -76,7 +76,7 @@ class PayloadTransformListener(rox_tf.TransformListener):
                 t.child_frame_id=m.name
                 t.transform.rotation = m.pose.orientation
                 t.transform.translation = _point_to_vector3(m.pose.position)
-                self.ros_listener.setTransform(t)
+                self.ros_listener._buffer.set_transform_static(t,"default_authority")
             
         for p_t in msg.payload_targets:
             t=TransformStamped()
@@ -85,7 +85,7 @@ class PayloadTransformListener(rox_tf.TransformListener):
             t.child_frame_id=p_t.name
             t.transform.rotation = p_t.pose.orientation
             t.transform.translation = _point_to_vector3(p_t.pose.position)
-            self.ros_listener.setTransform(t)            
+            self.ros_listener._buffer.set_transform_static(t,"default_authority") 
         
         for p_m in msg.link_markers:
             for m in p_m.markers:
@@ -95,5 +95,5 @@ class PayloadTransformListener(rox_tf.TransformListener):
                 t.child_frame_id=m.name
                 t.transform.rotation = m.pose.orientation
                 t.transform.translation = _point_to_vector3(m.pose.position)
-                self.ros_listener.setTransform(t)   
+                self.ros_listener._buffer.set_transform_static(t,"default_authority")   
         
