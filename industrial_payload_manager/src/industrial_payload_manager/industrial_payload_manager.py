@@ -99,9 +99,9 @@ class PayloadManager(object):
             self._tesseract_pub = rospy.Publisher("tesseract_diff", TesseractState, latch=True, queue_size=10)
             
 
-    def _payload_msg_cb(self, msg):                
-        try:
-            with self.payloads_lock:            
+    def _payload_msg_cb(self, msg):
+        with self.payloads_lock:
+            try:
                 for p in msg.payloads:
                     if p.name in self.payload_targets or p.name in self.link_markers:
                         rospy.logerr("Payload name already in use %s", p.name)
@@ -159,12 +159,12 @@ class PayloadManager(object):
                     if d in self.link_markers:
                         del self.link_markers[d]
             
-            self._publish_planning_scene(delete_payloads)
-            self._publish_rviz_sim_cameras()
-            if (_use_tesseract):
-                self._publish_tesseract_scene(delete_payloads)
-        except:
-            traceback.print_exc()
+                self._publish_planning_scene(delete_payloads)
+                self._publish_rviz_sim_cameras()
+                if (_use_tesseract):
+                    self._publish_tesseract_scene(delete_payloads)
+            except:
+                traceback.print_exc()
     
     def _publish_planning_scene(self, delete_payloads):
         planning_scene = PlanningScene()
@@ -464,23 +464,24 @@ class PayloadManager(object):
             self._payload_msg_pub.publish(payload_a)        
     
     def _update_payload_pose_srv_cb(self, req):
-        try:
-            n=rospy.Time.now()
-            payload=copy.deepcopy(self.payloads[req.name].payload_msg)
-                            
-            payload.pose=req.pose
-            payload.header.frame_id=req.header.frame_id       
-            payload.header.stamp=n
-            payload.confidence = req.confidence
-            
-            payload_a=PayloadArray()
-            payload_a.payloads.append(payload)
-            payload_a.header.stamp=n
-            self._payload_msg_pub.publish(payload_a)  
-        except:
-            traceback.print_exc()
-            return UpdatePayloadPoseResponse(False)
-        return UpdatePayloadPoseResponse(True)
+        with self.payloads_lock:
+            try:
+                n=rospy.Time.now()
+                payload=copy.deepcopy(self.payloads[req.name].payload_msg)
+                                
+                payload.pose=req.pose
+                payload.header.frame_id=req.header.frame_id       
+                payload.header.stamp=n
+                payload.confidence = req.confidence
+                
+                payload_a=PayloadArray()
+                payload_a.payloads.append(payload)
+                payload_a.header.stamp=n
+                self._payload_msg_pub.publish(payload_a)  
+            except:
+                traceback.print_exc()
+                return UpdatePayloadPoseResponse(False)
+            return UpdatePayloadPoseResponse(True)
     
     def publish_moveit_aco(self):
         try:
