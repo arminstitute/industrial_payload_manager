@@ -95,17 +95,17 @@ payloads:
       mesh_colors: []
     markers: []
     inertia: 
-      m: 0.0
-      com: 
-        x: 0.0
-        y: 0.0
-        z: 0.0
-      ixx: 0.0
-      ixy: 0.0
-      ixz: 0.0
-      iyy: 0.0
-      iyz: 0.0
-      izz: 0.0
+      m: 7.232
+      com:
+        x: 0.2
+        y: 0.22
+        z: 0.34
+      ixx: 0.399590858504
+      ixy: 0.0108344834253
+      ixz: 0.0188835784439
+      iyy: 0.409146454581
+      iyz: 0.00774316170404
+      izz: 0.311262686915
     confidence: 0.1
   - 
     header: 

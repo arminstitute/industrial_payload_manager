@@ -36,7 +36,7 @@ class TestUrdfToPayload(unittest.TestCase):
         for m1, m2 in zip(p1.markers, p2.markers):
             self._assert_aruco_gridboard_with_pose_equal(m1, m2)
         
-        #TODO: assert inertia is equal
+        self._assert_inertia_almost_equal(p1.inertia, p2.inertia)
         
         self.assertAlmostEqual(p1.confidence, p2.confidence)
             
@@ -85,6 +85,19 @@ class TestUrdfToPayload(unittest.TestCase):
         self.assertEqual(l1.header.frame_id, l2.header.frame_id)        
         for m1, m2 in zip(l1.markers, l2.markers):
             self._assert_aruco_gridboard_with_pose_equal(m1, m2)
+            
+    def _assert_inertia_almost_equal(self, i1, i2):
+        self.assertAlmostEqual(i1.m,i2.m)
+        self.assertAlmostEqual(i1.com.x,i2.com.x)
+        self.assertAlmostEqual(i1.com.y,i2.com.y)
+        self.assertAlmostEqual(i1.com.z,i2.com.z)
+        self.assertAlmostEqual(i1.ixx, i2.ixx)
+        self.assertAlmostEqual(i1.ixy, i2.ixy)
+        self.assertAlmostEqual(i1.ixz, i2.ixz)
+        self.assertAlmostEqual(i1.ixy, i2.ixy)
+        self.assertAlmostEqual(i1.iyy, i2.iyy)
+        self.assertAlmostEqual(i1.iyz, i2.iyz)
+        self.assertAlmostEqual(i1.izz, i2.izz)
     
 if __name__ == "__main__":
 

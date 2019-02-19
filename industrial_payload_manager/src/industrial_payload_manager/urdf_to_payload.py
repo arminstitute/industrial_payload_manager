@@ -40,7 +40,7 @@ import numpy as np
 import xml.etree.ElementTree as ET
 import rospy
 from itertools import chain
-from geometry_msgs.msg import Vector3
+from geometry_msgs.msg import Vector3, Inertia
 from std_msgs.msg import ColorRGBA
 from shape_msgs.msg import SolidPrimitive
 
@@ -98,6 +98,39 @@ def urdf_to_payload(xml_str):
     payload_msg.header.frame_id=initial_pose_joint.parent    
     payload_msg.pose=_origin_to_pose(initial_pose_joint.origin)
     
+    #Load in inertia
+    
+    if payload_link.inertial is not None:
+        
+        m=Inertia()
+        m.m = payload_link.inertial.mass
+        m.ixx = payload_link.inertial.inertia.ixx
+        m.ixy = payload_link.inertial.inertia.ixy
+        m.ixz = payload_link.inertial.inertia.ixz
+        m.iyy = payload_link.inertial.inertia.iyy
+        m.iyz = payload_link.inertial.inertia.iyz
+        m.izz = payload_link.inertial.inertia.izz
+        
+        if payload_link.inertial.origin is not None:
+            if payload_link.inertial.origin.xyz is not None:
+                m.com.x=payload_link.inertial.origin.xyz[0]
+                m.com.y=payload_link.inertial.origin.xyz[1]
+                m.com.z=payload_link.inertial.origin.xyz[2]
+            if payload_link.inertial.origin.rpy is not None:
+                R = np.matrix(rox.rpy2R(np.array(payload_link.inertial.origin.rpy)))
+                I = np.matrix([[m.ixx, m.ixy, m.ixz],[m.ixy,m.iyy,m.iyz],[m.ixz,m.iyz,m.izz]])
+                I2 = np.dot(np.transpose(R),I).dot(R)
+                m.ixx = I2[0,0]
+                m.ixy = I2[0,1]
+                m.ixz = I2[0,2]
+                m.ixy = I2[1,0]
+                m.iyy = I2[1,1]
+                m.iyz = I2[1,2]
+                m.izz = I2[2,2]
+                
+        
+        payload_msg.inertia = m
+        
     #Load in gripper targets    
     for _, l in urdf_robot.link_map.items():
         m = re.match(r'^\w+_gripper_target(?:_(\d+))?$',l.name)

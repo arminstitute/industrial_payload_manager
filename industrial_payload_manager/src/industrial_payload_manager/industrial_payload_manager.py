@@ -279,7 +279,8 @@ class PayloadManager(object):
         aco = AttachedCollisionObject()    
         aco.link_name = payload.attached_link
         aco.object = co
-        aco.touch_links = touch_links     
+        aco.touch_links = touch_links
+        aco.weight = msg.inertia.m 
         
         #self._pub_aco.publish(aco)
         return aco
@@ -357,6 +358,7 @@ class PayloadManager(object):
             if len(msg.collision_geometry.mesh_colors) > i:
                 attach_obj.collision.primitive_colors.append(msg.collision_geometry.mesh_colors[i])
                 attach_obj.visual.primitive_colors.append(msg.collision_geometry.mesh_colors[i])
+        attach_obj.inertia = msg.inertia
         
         body_info = AttachedBodyInfo()        
         body_info.parent_link_name=msg.header.frame_id

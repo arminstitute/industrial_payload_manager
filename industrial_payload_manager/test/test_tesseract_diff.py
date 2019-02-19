@@ -85,7 +85,8 @@ class TestTesseractDiff(unittest.TestCase):
         self._assert_visual_geometry_equal(obj1.visual, obj2.visual)
         self._assert_collision_geometry_equal(obj1.collision, obj2.collision)
         
-        #TODO: inertia        
+        self._assert_inertia_almost_equal(obj1.inertia,obj2.inertia)
+             
         self.assertEqual(obj1.operation, obj2.operation)
     
     def _assert_visual_geometry_equal(self, vis1, vis2):        
@@ -147,7 +148,18 @@ class TestTesseractDiff(unittest.TestCase):
                                 pose1.orientation.z, pose1.orientation.w], \
                                [pose2.orientation.x, pose2.orientation.y, \
                                 pose2.orientation.z, pose2.orientation.w] )
-    
+    def _assert_inertia_almost_equal(self, i1, i2):
+        self.assertAlmostEqual(i1.m,i2.m)
+        self.assertAlmostEqual(i1.com.x,i2.com.x)
+        self.assertAlmostEqual(i1.com.y,i2.com.y)
+        self.assertAlmostEqual(i1.com.z,i2.com.z)
+        self.assertAlmostEqual(i1.ixx, i2.ixx)
+        self.assertAlmostEqual(i1.ixy, i2.ixy)
+        self.assertAlmostEqual(i1.ixz, i2.ixz)
+        self.assertAlmostEqual(i1.ixy, i2.ixy)
+        self.assertAlmostEqual(i1.iyy, i2.iyy)
+        self.assertAlmostEqual(i1.iyz, i2.iyz)
+        self.assertAlmostEqual(i1.izz, i2.izz)
     
     
 if __name__ == "__main__":

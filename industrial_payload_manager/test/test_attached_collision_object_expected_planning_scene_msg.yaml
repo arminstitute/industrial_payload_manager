@@ -1953,7 +1953,7 @@ robot_state:
           frame_id: ''
         joint_names: []
         points: []
-      weight: 0.0
+      weight: 7.232
   is_diff: True
 robot_model_name: ''
 fixed_frame_transforms: []
