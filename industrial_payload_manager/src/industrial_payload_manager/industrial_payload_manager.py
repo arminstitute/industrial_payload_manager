@@ -103,66 +103,100 @@ class PayloadManager(object):
         with self.payloads_lock:
             try:
                 for p in msg.payloads:
-                    if p.name in self.payload_targets or p.name in self.link_markers:
-                        rospy.logerr("Payload name already in use %s", p.name)
-                        continue
-                    if p.name not in self.payloads:
-                        ros_id=self._ros_id
-                        self._ros_id += 1
-                        payload=Payload(p, ros_id)
-                        self.payloads[p.name]=payload
-                        #self._update_payload_mesh(payload)
-                    else:
-                        payload = self.payloads[p.name]
-                        #ignore stale data
-                        if payload.payload_msg.header.stamp > p.header.stamp:
+                    try:
+                        if p.name in self.payload_targets or p.name in self.link_markers:
+                            rospy.logerr("Payload name already in use %s", p.name)
                             continue
-                        
-                        payload.payload_msg=p                
-                        #self._update_payload_mesh(payload) 
+                        if p.name not in self.payloads:
+                            ros_id=self._ros_id
+                            self._ros_id += 1
+                            payload=Payload(p, ros_id)
+                            self.payloads[p.name]=payload
+                            #self._update_payload_mesh(payload)
+                        else:
+                            payload = self.payloads[p.name]
+                            #ignore stale data
+                            if payload.payload_msg.header.stamp > p.header.stamp:
+                                continue
+                            
+                            payload.payload_msg=p                
+                            #self._update_payload_mesh(payload)
+                        rospy.loginfo("Updated payload " + p.name )
+                    except:
+                        traceback.print_exc()
+                        rospy.logger("Error processing payload " + p.name)
                     
                 for t in msg.payload_targets:
-                    if t.name in self.payloads or t.name in self.link_markers:
-                        rospy.logerr("Payload name already in use %s", t.name)
-                        continue
-                    if t.name not in self.payload_targets:                    
-                        self.payload_targets[t.name]=t                    
-                    else:
-                        payload_target = self.payload_targets[t.name]
-                        #ignore stale data
-                        if payload_target.header.stamp > t.header.stamp:
+                    try:
+                        if t.name in self.payloads or t.name in self.link_markers:
+                            rospy.logerr("Payload name already in use %s", t.name)
                             continue
-                        self.payload_targets[t.name]=t
+                        if t.name not in self.payload_targets:                    
+                            self.payload_targets[t.name]=t                    
+                        else:
+                            payload_target = self.payload_targets[t.name]
+                            #ignore stale data
+                            if payload_target.header.stamp > t.header.stamp:
+                                continue
+                            self.payload_targets[t.name]=t
+                        rospy.loginfo("Updated payload target " + t.name)
+                    except:
+                        traceback.print_exc()
+                        rospy.logger("Error processing payload target " + t.name)
                 
                 for l in msg.link_markers:
-                    if l.header.frame_id in self.payloads or l.header.frame_id in self.payload_targets:
-                        rospy.logerr("Payload name already in use %s", t.name)
-                        continue
-                    if l.header.frame_id not in self.link_markers:                    
-                        self.link_markers[l.header.frame_id]=l                    
-                    else:
-                        link_marker = self.link_markers[l.header.frame_id]
-                        #ignore stale data
-                        if link_marker.header.stamp > l.header.stamp:
+                    try:
+                        if l.header.frame_id in self.payloads or l.header.frame_id in self.payload_targets:
+                            rospy.logerr("Payload name already in use %s", t.name)
                             continue
-                        self.link_markers[l.header.frame_id]=l
+                        if l.header.frame_id not in self.link_markers:                    
+                            self.link_markers[l.header.frame_id]=l                    
+                        else:
+                            link_marker = self.link_markers[l.header.frame_id]
+                            #ignore stale data
+                            if link_marker.header.stamp > l.header.stamp:
+                                continue
+                            self.link_markers[l.header.frame_id]=l
+                        rospy.loginfo("Updated link marker " + l.header.frame_id )
+                    except:
+                        traceback.print_exc()
+                        rospy.logger("Error processing link_marker " + l.header.frame_id)
                 
                 delete_payloads=[]
-                for d in msg.delete_payloads:
-                    if d in self.payloads:
-                        payload = self.payloads[d]
-                        del self.payloads[d]
-                        delete_payloads.append(payload)
-                        #self._delete_payload_mesh(payload)                        
-                    if d in self.payload_targets:
-                        del self.payload_targets[d]
-                    if d in self.link_markers:
-                        del self.link_markers[d]
+                try:
+                    for d in msg.delete_payloads:
+                        if d in self.payloads:
+                            payload = self.payloads[d]
+                            del self.payloads[d]
+                            delete_payloads.append(payload)
+                            rospy.loginfo("Deleted payload " + d )
+                            #self._delete_payload_mesh(payload)                        
+                        if d in self.payload_targets:
+                            del self.payload_targets[d]
+                            rospy.loginfo("Deleted payload target " + d )
+                        if d in self.link_markers:
+                            del self.link_markers[d]
+                            rospy.loginfo("Deleted link marker " + d )
+                except:
+                    traceback.print_exc()
+                    rospy.logger("Error deleting payload " + d.name)
             
-                self._publish_planning_scene(delete_payloads)
-                self._publish_rviz_sim_cameras()
+                try:
+                    self._publish_planning_scene(delete_payloads)
+                except:
+                    traceback.print_exc()
+                    rospy.logger("Error publishing planning scene")
+                try:
+                    self._publish_rviz_sim_cameras()
+                except:
+                    traceback.print_exc()
+                    rospy.logger("Error publishing rviz markers")
                 if (_use_tesseract):
-                    self._publish_tesseract_scene(delete_payloads)
+                    try:
+                        self._publish_tesseract_scene(delete_payloads)
+                    except:
+                        traceback.print_exc()
+                        rospy.logger("Error publishing tesseract scene")
             except:
                 traceback.print_exc()
     
@@ -482,6 +516,7 @@ class PayloadManager(object):
                 self._payload_msg_pub.publish(payload_a)  
             except:
                 traceback.print_exc()
+                rospy.logerr("Could not update pose for payload " + req.name)
                 return UpdatePayloadPoseResponse(False)
             return UpdatePayloadPoseResponse(True)
     
